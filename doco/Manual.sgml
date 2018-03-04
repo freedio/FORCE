@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<document>
+  <title>FORCE Manual</title>
+  <author>Dominik Wezel</author>
+
+  <chapter>
+      <title>Standalone Compiler</title>
+      <p>The &FORCE; compiler can be used inline or as a standalone application.</p>
+      <p>This chapter describes the standalone compiler.</p>
+      <section>
+          <title>Purpose</title>
+          <p>The standalone &FORCE; compiler's task is to
+              <list>
+                  <item>generate vocabulary files, commonly with the <code>.voc</code> extension;</item>
+                  <item>generate object files, commonly with the <code>.o</code> extension;</item>
+                  <item>add vocabularies and object files to libraries;</item>
+                  <item>create standalone &FORCE; applications.</item>
+              </list>
+          </p>
+      </section>
+      <section>
+          <title>Invocation</title>
+          <p>The standalone &FORCE; compiler can be invoked from the command line as
+              <code>forcom</code>
+              with the following options and arguments:
+          </p>
+          <p>
+              <defs>
+                  <term><code>-L<arg>level</arg></code> or <code>--loglevel=<arg>level</arg></code></term>
+                  <def>sets the log level to the specified <arg>level</arg>, which is any of the
+                      following: <code>debug</code>, <code>info</code>, <code>warn</code>,
+                      <code>error</code>.  The default log level is <code>warn</code>.
+                  </def>
+                  <term><code>-t<arg>type</arg></code> or <code>--type=<arg>type</arg></code></term>
+                  <def>defines which <arg>type</arg> of (final) output the compiler is supposed to produce:
+                      <code>voc</code> <q>only</q> creates a vocabulary file; <code>obj</code>
+                      also creates an object file (format depends on the operating system);
+                      <code>lib</code> also puts the <code>.voc</code> and <code>.o</code> files
+                      into their appropriate libraries; <code>.pgm</code> also creates a standalone
+                      application (but will not put the targets into the libraries).
+                  </def>
+                  <term><code>-l<arg>library</arg></code> or <code>--library=<arg>library</arg></code></term>
+                  <def>specifies the <arg>library</arg> file(s) to use.</def>
+                  <term><code>-o<arg>filename</arg></code> or <code>--output=<arg>filename</arg></code></term>
+                  <def>specifies a deviating output file name (and path).  By default, the vocabulary
+                      file is supposed to have the same base name as the source file, which in turn
+                      is supposed to have the same name as the leading vocabulary inside the source
+                      code.
+                  </def>
+                  <term><code>-m<arg>model</arg></code> or <code>--model=<arg>model</arg></code></term>
+                  <def>specifies the threading <arg>model</arg> to generate.  &FORCE; knows three different
+                      threading models: <code>direct</code>, <code>indirect</code>, and <code>inline</code>,
+                      all of which are described in the section about Threading Models.
+                  </def>
+                  <term><code>-a<arg>architecture</arg></code> or <code>--arch=<arg>architecture</arg></code></term>
+                  <def>specifies the target <arg>architecture</arg> for which to generate the binaries.
+                      &FORCE; is present on a huge lot of architectures, and the standalone compiler
+                      can act as a cross-compiler for any of these, as further described in the
+                      section about Target Architectures.  The default architecture is the one on
+                      which the compiler is running.
+                  </def>
+                  <term><code>-s<arg>system</arg></code> or <code>--system=<arg>system</arg></code></term>
+                  <def>specifies the target operating system for which the binaries are to be generated.
+                      As with target architectures, the standalone compiler can generate bnaries for
+                      all currently known operating systems (Linux, Windows, OSX, iOS, Android, &ellips;
+                      The default operating system is the one on which the compiler is running.
+                  </def>
+                  <term><code><arg>sourcefile[.4th]</arg></code></term>
+                  <def>The path of the source file to process, commonly with the <code>.4th</code>
+                      extension, in which case the extension does not need to be specified.  If no
+                      source file is specified, the compiler reads stdin, the standard input file.
+                  </def>
+              </defs>
+          </p>
+      </section>
+  </chapter>
+
+</document>

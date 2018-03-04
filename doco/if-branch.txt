@@ -1,0 +1,10 @@
+0= if  xxx  ELSE  yyy  THEN         0= if  xxx  THEN
+
+IF:     @IF # 0= JMP <--+ INV       IF:     @IF # 0= JMP <--+ INV
+        n # NOP <-------+                   n # NOP <-------+
+@IF     xxx             |           @IF     xxx             |
+        xxx             |                   xxx             |
+ELSE:   THEN # JMP <----|---+       THEN:   ----------------+
+@ELSE   yyy ------------+   |
+        yyy                 |
+THEN:   --------------------+

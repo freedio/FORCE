@@ -1,0 +1,114 @@
+
+
+- runtime
++ compile time
+
+• endblock will be set by "define endblock"
+  using the address on the compiler stack
+
+break     - pop endblock
+          - jump to endblock
+
+continue  - jump to beginblock
+
+begin     - push endblock
+          + label beginblock
+
+end       - drop endblock
+          + define endblock
+
+again     - jump to beginblock
+          + define endblock
+
+until     - ?jmp to enduntil
+          - jump to beginblock
+          + label enduntil
+          - drop endblock
+          + define endblock
+
+while     - ?jmp to endwhile
+          - pop endblock
+          - jmp to endblock
+          - label endwhile
+
+repeat    - jump to beginblock
+          + define endblock
+
+if        - push endblock
+          - ?jmp to endif
+          - jump to endblock
+          + label endif
+
+else      - tuck endblock2
+          - 
+          
+          
+
+
+if xxx break yyy then:
+            RAX RAX TEST
+            ENDIF # 0- ?JMP
+BEGINIF:    ENDBLOCK # NEAR JMP
+ENDIF:      XXX
+            BEGINIF # JMP
+            YYY
+ENDBLOCK:   ...
+
+
+if xxx break yyy else zzz break qqq then:
+            RAX RAX TEST
+            ENDIF # 0- ?JMP
+BEGINIF:    ENDBLOCK1 # NEAR JMP
+ENDIF:      XXX
+            BEGINIF # JMP
+            YYY
+BEGINELSE:  ENDBLOCK2 # NEAR JMP
+ENDBLOCK1:  ZZZ
+            BEGINELSE # JMP
+            QQQ
+ENDBLOCK2:  ...
+
+
+begin xxx end:
+            ENDBEGIN # JMP
+BEGIN:      ENDBLOCK # JMP
+ENDBEGIN:   XXX
+ENDBLOCK:   ...
+
+begin xxx again:
+            ENDBEGIN # JMP
+BEGIN:      ENDBLOCK # JMP
+ENDBEGIN:   XXX
+            ENDBEGIN # JMP
+ENDBLOCK:   ...
+
+begin xxx break yyy continue zzz until:
+            ENDBEGIN # JMP
+BEGIN:      ENDBLOCK # NEAR JMP
+ENDBEGIN:   XXX
+            BEGIN # JMP
+            YYY
+            ENDBEGIN # JMP
+            ZZZ
+---near:---
+            ENDBEGIN # 0= ?JMP
+---far:---
+            ENDUNTIL # 0- ?JMP
+            ENDBEGIN # JMP
+
+[ecx] do xxx break yyy continue zzz loop:
+            ENDDO # JMP
+BEGINDO:    ENDBLOCK # NEAR JMP
+NEXTDO:     BEGINLOOP # NEAR JMP
+ENDDO:      XXX
+            BEGINDO # JMP
+            YYY
+            ENDDO # JMP
+            ZZZ
+---near:---
+BEGINLOOP:  ENDDO # LOOP
+---far:---
+BEGINLOOP:  RCX DEC
+            ENDLOOP # 0= ?JMP
+            ENDDO # JMP
+ENDLOOP:    ...

@@ -1,0 +1,21 @@
+Konzept Multivocabulary FORCE
+=============================
+
+Requirements
+------------
+
+- Pro Compilation wird ein Vocabulary generiert.
+- Generierte Vocabularies müssen bereits zu Compile-Time ladbar sein.
+- Ein Vocabulary wird beim Laden dem aktuellen Environment hinzugefügt.
+- Das Environment kann beim Laden anders sein als zur Zeit der Generierung
+  ⇒ die Vocabulary-Dependencies müssen beim Laden angepasst werden.
+
+Ladevorgang
+-----------
+
+ 1. Vocabulary abschnittweise ins RAM laden (Vocabulary-Section on the fly erstellen)
+ 2. Dependencies auflösen:
+    - durch §DEPS loopen -> i
+    - wenn Dependency VOCDEP:
+      - Angegebenes Vocabulary rekursiv laden -> v
+      - Alle Referenzen in §RELS mit Verweis auf Dependency i durch v ersetzen.

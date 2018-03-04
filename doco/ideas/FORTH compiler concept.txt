@@ -1,0 +1,64 @@
+FORTH compiler
+==============
+
+Concept
+-------
+- Basically an interpreter (heart is interpreter).
+- Compiler core creates dictionary/ies on demand.
+- New words in dictionaries are available to the compiler immediately after creation.
+- When done, compiler can save generated code in various formats.
+
+Interpreter
+-----------
+- Read / Eval / Print - Loop
+- Read:
+  - Interpreter reads a word.
+  - If the current state is "interpreter", searches the CompilerTools vocabulary,
+    then interprets the word as a literal to be compiled into the target code,
+    which may eventually fail with "Word not found"
+  - If the current state is "compiler", first looks up the target vocabularies generated so far,
+    then looks up the CompilerTools vocabulary for an immediate word,
+    then looks up the Forcembler vocabulary, (if found, switches to state to "assembler")
+    then interprets the word as a literal to be compiled into the target code,
+    which may eventually fail with "Word not found"
+  - If the current state is "assembler", searches the Forcembler vocabulary,
+    then looks up the target vocabularies generated so far,
+    then looks up the CompilerTools vocabulary for an immediate word,
+    then interprets the word as a literal to be compiled into the target code,
+    which may eventually fail with "Word not found"
+- Eval:
+  - If the current state is "compiler", and the looked-up word was found
+    - in a target vocabulary, compiles a reference to it into the code.
+    - in the CompilerTools vocabulary, executes it.
+    - in the Forcembler vocabulary, executes it.
+    - to be a literal, compiles a reference to the literal into the code.
+  - If the current state is "interpreter", and the looked-up word was found
+    - in a target vocabulary, returns its vocabulary address
+    - in the CompilerTools vocabulary, executes it
+    - in the Forcembler vocabulary, balks at it
+    - to be a literal, pushes the literal on the stack
+
+Create Dictionary/ies on Demand
+-------------------------------
+- A new class is started with the keyword "class".
+- A new vocabulary is started with the keyword "vocabulary".
+- Classes and vocabularies have the same basic structure, but different purposes.
+
+New Words are Available Immediately
+-----------------------------------
+- Requires that the words have the same interface as the compiler vocabularies.
+  ---> When using GFORTH, this is not the case, because GFORTH has a different vocabulary and word structure.
+- Dictionaries created by the compiler are only searched during compile-time.
+- Immediate words in the generated dictionaries are not executed at compile-time if they have a different code version.
+  ---> There must be equivalents for these words in the migration version of the compiler.
+
+Save in various formats
+-----------------------
+- 
+
+Open Decisions
+==============
+- How to generate and load code?
+  (1) Specify target format before compiler runs, generate code in requested target format. -> Fastest
+  (2) Generate code in standard format (threaded) and then transform it during save. -> Makes it possible to specify multiple output formats and generate them all in one run
+  (3) Generate and save code in standard format (threaded) and JIT-Compile during load -> Most portable

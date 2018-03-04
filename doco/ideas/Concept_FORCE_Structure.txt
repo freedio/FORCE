@@ -1,0 +1,61 @@
+Interpreter-Assembler-Compiler-Builder Concept
+==============================================
+
+Interpreter Requirements
+------------------------
+
+Assembler Requirments
+---------------------
+
+• Assembler is always full-fledged.  It must be able to generate the entire machine code supported by the platform specification.
+
+Macro Assembler
+---------------
+
+• Macro Assembler defines the set of operations required to generate the FORCE base code, formulated in assembler code.
+• Macro Assembler may define a set of extended operations that profit from being present in machine code on the target architecture.
+
+FORCE vocabulary
+----------------
+
+• The FORCE vocabulary defines the word base for a FORCE implementation.
+• FORCE is based on the macro assembler vocabulary for the implementation of the primitives, but also defines advanced words (in FORCE).
+• FORCE must use the minimal macro assembler set, but may also draw on the extended set.  Use of the extended set must however be tagged as such (optimally by
+  gathering the words using the extended set in a particular place tagged separately.
+• FORCE is as close as possible to FORTH while supporting an advanced set of operations and concepts.
+
+INTER vocabulary
+----------------
+
+• The INTER vocabulary complements the FORCE vocabulary with a program entry point and the remaining words required to run the interpreter loop as a program on
+  a specific target architecture.
+
+Compiler Requirements
+---------------------
+
+• Compiler generates one of 5 exclusively selectable target code formats:
+   1. threaded code: the code field is basically a list of references to other words.
+      · Advantages: › very simple to generate. › easy to align addresses to optimal boundaries
+      · Drawbacks: › requires an executor. › slow due to the required executor. › bulky (each operation is a full address in memory).
+   2. byte code: the code field is a Java byte-code program.
+      · Advantages: › most portable of all variants: the only part depending on the target architecture is the byte-code interpreter.
+      · Drawbacks: › slow, because the byte code needs to be interpreted.
+   3. direct code: the code field consists of calls to other words, interspersed with other assembly code and addresses.
+      · Advantages: › very easy to generate. › faster than threaded or byte code. › better portable than inline code.
+      · Drawbacks: › bulky (each operation is a full address + the call statement in memory).
+   4. inline code: code field is machine code, inlined if small enough; calls only to words exceeding the speed vs. space ratio.
+      · Advantages: › as fast as possible. › as slim as possible.
+      · Drawbacks: › least portable of all variants.
+• Compiler is embedded in the interpreter loop.  This allows to create new vocabularies and words within them in the interpreter.
+
+Builder Requirements
+--------------------
+
+• Builder ("save") can transform the generated code into any of the following object file formats:
+  - ELF (Linux)
+  - PE / EFI (Windows)
+  - TODO: Mac Format?
+  - .class / .jar
+  This must also work from code generated in the interpreter.
+• Builder must be able to generate single modules (from vocabularies), libraries (from vocabulary sets), programs (libraries with an executable entry point),
+  as well as a new FORCE interpreter environment.

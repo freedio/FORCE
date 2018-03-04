@@ -1,0 +1,10 @@
+Find o9ut
+• how external library symbols need to be referenced
+• how external library functions are called (near call, far call, interrupt, ...)
+• how to code a single module (vocabulary) so that it can be linked with an application.
+• how to load an application (multiple vocabularies referencing each other) into memory
+  through a small application loader on Linux (later also Windows, Mac)
+
+Write
+• ELF formatter
+• ELF loader (?)

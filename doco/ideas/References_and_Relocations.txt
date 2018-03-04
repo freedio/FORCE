@@ -1,0 +1,63 @@
+References
+==========
+
+Vocabulary Reference
+--------------------
+Offset      DWORD   Byte offset into segment
+Context     WORD    Dep# in §DEPS (0 for own vocabulary)
+Type        BYTE    REF_VOCAB
+Segment     BYTE    Segment# of vocabulary (any of §DICT §CODE §DATA §TEXT §STAB §RELS §DEPS)
+
+External Symbol Reference
+-------------------------
+Offset      DWORD   Byte offset from symbol entry point
+Context     WORD    Dep# in §DEPS (0 for own vocabulary)
+Type        BYTE    REF_EXTRN
+Symbol      BYTE    Symbol# in §STAB of context
+
+
+Virtual Reference (VREF)
+------------------------
+
+A VREF must have the following parts:
+• Vocabulary
+• Segment within vocabulary
+• Offset within segment
+
+The parts are referenced as
+• Vocabulary: index of dependency in the global vocabulary directory
+• Segment: segment number
+• Offset: as itself
+
+Resolution of a VREF:
+A VREF is resolved into an address by getting the address of the specified vocabulary, looking up
+the specified segment and then adding the specified offset.
+
+In a serialized isolated vocabulary, the vocabulary is instead referenced as a dependency table index.
+Therefore, the address of the dependency (DEP.ADDR) must be set to the address of the loaded
+vocabulary to which the dependency refers.
+
+Global Vocabulary Directory
+===========================
+
+Vocabulary Directory
+--------------------
+@VDIR       CELL    Address of directory
+#VDIR       CELL    Size of directory
+VDIR#       CELL    Length of directory
+
+Vocabulary Entry
+----------------
+Address     CELL    Address of vocabulary
+
+
+Preparing a Vocabulary
+======================
+
+ 1. Load vocabulary
+ 2. Make entry in vocabulary directory -> directory entry number DEN-0
+ 3. For each DEP_VOCAB entry in the dependency table:
+     1. load vocabulary -> directory entry number DEN-n
+     2. replace DEP.GBAL with DEN-n
+     3. replace all contexts in relocation table with DEN-n
+ 4. replace all contexts in relocation +

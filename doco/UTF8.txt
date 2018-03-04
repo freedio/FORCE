@@ -1,0 +1,8 @@
+0xxxxxxx                                                                        0   7   7       0
+110xxxxx 10xxxxxx                                                               8   11  5+6     1
+1110xxxx 10xxxxxx 10xxxxxx                                                      12  16  4+12    2
+11110xxx 10xxxxxx 10xxxxxx 10xxxxxx                                             17  21  3+18    3
+111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx                                    20  26  2+24    4
+1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx                           25  31  1+30    5
+11111110 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx                  32  36  0+36    6
+11111111 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx         37  42  0+42    7
