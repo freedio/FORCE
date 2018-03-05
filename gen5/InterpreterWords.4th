@@ -14,26 +14,27 @@ vocabulary InterpreterWords
   requires" ParserControl.voc"
   requires" AsmBase-IA64.voc"
   requires" MacroForcembler-IA64.voc"
+  requires" Compiler.voc"
   requires" FieldVar.voc"
 
 === Local Helpers ===
 
 ( Initializes vocabulary @v with name v$.  This will also make it the current target vocabulary. )
 : initVocabulary ( v$ @v -- )  >vocabularies targetVoc!
-  SCOPE.PUBLIC FLAG.STATIC bit+ SECTION-FLAGS !  >text
+  SCOPE.PUBLIC FLAG.STATIC bit+ SECTION-FLAGS !  >text  SCOPE.PRIVATE FIELD-FLAGS !
   0 , ( superclass )  -1 d, ( module name offset )  0 d, ( instance size )  0 w, ( word count )
   0 w, ( voc flags )  %VOC-WORD CURRENT-FLAGS !  createWord
   currentCode!  ENTER, targetVoc# selfRef ADDR, EXIT2, currentCode#! segment> ;
 ( Initializes class @c with name c$ and superclass @sc.  This will also make the class the current
   vocabulary. )
 : initClass ( @sc c$ @c -- )  >vocabularies targetVoc!  SCOPE.PRIVATE SECTION-FLAGS !  >text
-  0 , ( superclass )  over !classDef
+  0 , ( superclass )  over !classDef  SCOPE.PRIVATE FIELD-FLAGS !
   over @vocabulary# selfRef  targetVoc# 0 0 createReferent  REL.ABS64 reloc,
   -1 d, ( module name offset )  swap class# d, ( instance size )  0 w, ( word count )
   1 VOC%CLASS u<< w, ( voc flags )  %VOC-WORD CURRENT-FLAGS !  createWord
   currentCode!  ENTER, targetVoc# selfRef ADDR, EXIT, currentCode#!  segment> ;
 : initStruct ( @ss c$ @s -- )  >vocabularies targetVoc!  SCOPE.PUBLIC SECTION-FLAGS !  >text
-  0 , ( superstruct )  over !structDef
+  0 , ( superstruct )  over !structDef  SCOPE.PUBLIC FIELD-FLAGS !
   over @vocabulary# selfRef  targetVoc# 0 0 createReferent  REL.ABS64 reloc,
   -1 d, ( module name offset )  swap class# d, ( struct size )  0 w, ( word count )
   1 VOC%STRUCT u<< w, ( voc flags )  %VOC-WORD CURRENT-FLAGS !  createWord
@@ -165,22 +166,24 @@ vocabulary InterpreterWords
 
 === Definitions ===
 
+: newWord ( w$ -- )  createWord  LINKER 0! ;
+
 ( Creates address "name". )
 : create ( >name -- )  readWord  info? if  espace dup $..  then
-  createWord currentCode! >text ENTER_FIELD,  DOVAR,  EXIT_FIELD, currentCode#!  segment> ;
+  newWord currentCode! >text ENTER_FIELD,  DOVAR,  EXIT_FIELD, currentCode#!  segment> ;
 ( Defines variable "name".  Inside a class, variables must be typed, regardless of whether they are
   static or not; inside vocabularies, a size specifier [byte, word, ...] must precede. )
-: variable ( type >name -- )  readWord  info? if  espace dup $..  then
+: variable ( type >name -- )  readWord  info? if  espace dup $..  then  LINKER 0!
   CURRENT-FLAGS @ FLAG.STATIC bit? unless  createField  else  createVariable  then ;
 ( Defines constant "name" with value val. )
-: constant ( val >name -- )
+: constant ( val >name -- )  LINKER 0!
   depth 1− dup >r ADP+ readWord  info? if  espace dup $..  then  createConstant  r> ADP- ;
 ( Starts colon definition "name". )
 : (colon) ( >name -- )  readWord  info? if  espace dup $..  then
-  createWord currentCode! >text ENTER,  instance? if  ENTER_INSTANCE,  then  compile ;
+  newWord currentCode! >text ENTER,  instance? if  ENTER_INSTANCE,  then  compile ;
 ( Starts colon definition "name" w/o the ENTER code. )
 : (doublecolon) ( >name -- )  readWord  info? if  espace dup $..  then
-  createWord currentCode! >text compile ;
+  newWord currentCode! >text compile ;
 ( Creates an alias for the last defined word.  Aliases inherit the original word's features such as
   visibility, and type. )
 : alias ( >name -- )  readWord  info? if  espace dup $..  then

@@ -59,7 +59,7 @@ create INITSTRUCT                   ( structure passed to initialization functio
   dup REL.SOURCE + @ dup referentVocabulary >dependency referentVocabulary! over REL.SOURCE + !
   RELOCATION# + loop  drop  #CURRENTWORD @ §TEXT #segment@ TEXT.#WORDS + w! ;
 ( Updates the vocabulary references of all relocation entries in vocabulary #v. )
-: updateRelocations ( -- :X: #v -- #v )  x@ #vocabulary@ §RELT @#segment@# RELOCATION# u/ 0 do
+: updateRelocs ( -- :X: #v -- #v )  x@ #vocabulary@ §RELT @#segment@# RELOCATION# u/ 0 do
   dup REL.TARGET + dup @ dup referentVocabulary x@ #vocabulary@ §DEPT @#segment@ swap cells+ 4+ d@
   referentVocabulary! swap !
   dup REL.SOURCE + dup @ dup referentVocabulary x@ #vocabulary@ §DEPT @#segment@ swap cells+ 4+ d@
@@ -73,7 +73,7 @@ create INITSTRUCT                   ( structure passed to initialization functio
 : resolveDependencies ( #v -- )
   dup >x #vocabulary@ §DEPT @#segment@# cellu/ 0 do
   dup d@ x@ #vocabulary@ §STRG @#segment@ + Module FINDMODULE @ execute over 4+ d!  cell+ loop  drop
-  updateRelocations updateSymbols x> drop ;
+  updateRelocs updateSymbols x> drop ;
 ( Run initialization methods of vocabulary #v. )
 : runInits ( #v -- )  #vocabulary@ §TEXT @#segment@# TEXT.VOCWORD +> begin dup while
   over d@ -rot 4 +> over c@ 1+ +> rot FLAG.INITCODE bit? if over 2+ INITSTRUCT swap exeqt drop then

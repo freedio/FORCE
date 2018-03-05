@@ -1,4 +1,5 @@
 import Forth
+import Exceptions
 import MemoryReallocationError
 
 vocabulary Memory
@@ -151,12 +152,15 @@ public static section --- API
 
 --- Entry Allocation ---
 
+( Allocates a memory chunk of # bytes and clears it to all 0. )
+: allocate0 ( # -- a )  dup allocate tuck -rot 0 cfill ;
 
 --- Object Allocation ---
 
-( Allocates an object instance of total size # and returns its address a. )
+( Allocates an object instance of total size #, clears it to all 0, and returns its address a. )
 : allocObj ( # -- a )  1<?if  1 "Invalid allocation size: %d"| InvalidArgumentException raise  then
-  512<?if  allocSmallObj  else  4080<?if  allocLargeObj  else  allocHugeObj  then  then ;
+  dup 512<?if  allocSmallObj  else  4080<?if  allocLargeObj  else  allocHugeObj  then  then
+  tuck -rot 0 cfill ;
 
 ( Initializes the vocabulary from initialization structure at address @initstr when loading. )
 private init : init ( @initstr -- @initstr )  0 pgmbreak dup ProgramBreak!

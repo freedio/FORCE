@@ -2,7 +2,6 @@
   * The Consolator is a static factory for creating Console objects.
   */
 
-import Class
 import ConChannel
 
 vocabulary Consolator

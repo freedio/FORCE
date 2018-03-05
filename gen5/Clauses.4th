@@ -153,6 +153,8 @@ vocabulary Clauses
 ( Disjoins x with _x. )
 : _#xor ( x _x -- x' )  # RAX XOR ;
 
+: _#bit? ( x _# -- ? )  # RAX BT  RAX RAX SBB ;
+
 ( Shifts n left arithmetically by _# bits. )
 : _#<< ( n _# -- n' )  # RAX SAL ;  alias _#≪
 ( Shifts n right arithmetically by _# bits. )
@@ -189,6 +191,10 @@ vocabulary Clauses
 : _#w-! ( a _w -- )  # WORD PTR 0 [RAX] SUB  RAX POP ;  alias _#w−!
 : _#d-! ( a _d -- )  # DWORD PTR 0 [RAX] SUB  RAX POP ;  alias _#d−!
 : _#q-! ( a _q -- )  # QWORD PTR 0 [RAX] SUB  RAX POP ;  alias _#q−!  alias _#-!  alias _#−!
+
+=== Memory Logicals ===
+
+: _#bit@ ( a _# -- ? )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX RAX SBB ;
 
 === String Clauses ===
 
@@ -313,5 +319,9 @@ vocabulary Clauses
 : _#u>?ifever ( u _u -- )  # RAX CMP  U> IFEVER ;  alias _#u≤?unlessever
 ( Tests if u is not above _u and starts a unlikely conditional. )
 : _#u≤?ifever ( u _u -- )  # RAX CMP  U> UNLESSEVER ;  alias _#u>?unlessever
+
+
+: _#bit@if ( a _# -- )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX POP  CY IF ;
+: _#bit@unless ( a _# -- )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX POP  CY UNLESS ;
 
 vocabulary;

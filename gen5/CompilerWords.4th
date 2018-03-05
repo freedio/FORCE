@@ -13,10 +13,12 @@ vocabulary CompilerWords
   requires" Compiler.voc"
 
 ( Finishes the current colon definition. )
-: (semicolon) ( -- )  @CURRENTWORD @ &@ FLAG.STATIC bit@ unless  EXIT_INSTANCE,  then
-  EXIT, currentCode#! segment> interpret ;
+: (semicolon) ( -- )  LINKER @ if  @CURRENTWORD @ &@ FLAG.LINKER bit+!  then
+  @CURRENTWORD @ &@ FLAG.STATIC bit@ unless  EXIT_INSTANCE,  then
+  EXIT, currentCode#! segment>  interpret ;
 ( Finishes the current colon definition w/o exit code. )
-: (doublesemicolon) ( -- )  EXIT2, currentCode#! segment> interpret ;
+: (doublesemicolon) ( -- )  LINKER @ if  @CURRENTWORD @ &@ FLAG.LINKER bit+!  then
+  EXIT2,  currentCode#! segment>  interpret ;
 
 ( Switches to the interpreter. )
 : [ ( -- )  interpret ;
@@ -78,6 +80,9 @@ vocabulary CompilerWords
 : unlessever  UNLESSEVER, ;
 : else  ELSE, ;
 : then  THEN, ;
+
+: ?dupif  DUPIF, ;
+: ?dupunless  DUPUNLESS, ;
 
 === Conditional Terms ===
 

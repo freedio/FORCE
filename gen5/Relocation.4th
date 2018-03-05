@@ -50,10 +50,10 @@ cell+ constant RELOCATION#        ( Size of a relocation entry )
 : applyRelocations ( #v -- )  #vocabulary@ §RELT @#segment@# RELOCATION# u/ 0 do
   dup applyRelocation  RELOCATION# + loop  drop ;
 
-( For all entries of the relocation table with a source referent of &2, replace the source referent
+( For all entries of the relocation table with a target referent of &2, replace the target referent
   with &1 and re-apply the relocation. )
 : updateRelocations ( &1 &2 -- )  §RELT #segment@# RELOCATION# u/ 0 do
-  dup REL.SOURCE + @  2pick = if  2pick over REL.SOURCE + !  dup applyRelocation  then
+  dup REL.TARGET + @  2pick = if  2pick over REL.TARGET + !  dup applyRelocation  then
   RELOCATION# + loop  3drop ;
 ( Fulfills deferred word with symbol name s$ with implementation &w. )
 : fulfill ( &w s$ -- )  findSymbol unless  1 "Symbol «%s» not found!"|! abort  then

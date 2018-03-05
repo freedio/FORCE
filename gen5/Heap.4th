@@ -135,8 +135,10 @@ cell+ constant HEAP#              ( Size of the heap structure )
 : $, ( a$ -- )  dup c@ 1+ #, ;
 ( Allots # bytes on current heap. )
 : allot ( # -- )  allot@ drop ;
-( Allots # bytes on current heap and clears the area to all zeroes. )
+( Allots # bytes on current heap and clears the area to all zeroes.  # must be > 0! )
 : allotz ( # -- )  dup allot@ swap 0 cfill ;
+( Shortens the current heap by # bytes. )
+: unallot ( # -- )  negate currentHeap# heap+! ;
 
 === Heap State ===
 

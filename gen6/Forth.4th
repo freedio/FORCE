@@ -357,6 +357,23 @@ cell+ constant ExHandler#
 ( Returns unsigned oct-word o at address a. )
 : o@ ( a -- o )  OFETCH, ;
 
+( Exchanges signed byte at address a with c, returning previous value c'. )
+: b@! ( b a -- b' )  BXCHG,  DROP, ;
+( Exchanges unsigned byte at address a with c, returning previous value c'. )
+: c@! ( c a -- c' )  CXCHG,  DROP, ;
+( Exchanges signed word at address a with s, returning previous value s'. )
+: s@! ( s a -- s' )  SXCHG,  DROP, ;
+( Exchanges unsigned word at address a with w, returning previous value w'. )
+: w@! ( w a -- w' )  WXCHG,  DROP, ;
+( Exchanges signed double-word at address a with i, returning previous value i'. )
+: i@! ( i a -- i' )  IXCHG,  DROP, ;
+( Exchanges unsigned double-word at address a with d, returning previous value d'. )
+: d@! ( d a -- d' )  DXCHG,  DROP, ;
+( Exchanges signed quad-word at address a with l, returning previous value l'. )
+: l@! ( l a -- l' )  LXCHG,  DROP, ;
+( Exchanges unsigned quad-word at address a with q, returning previous value q'. )
+: q@! ( q a -- q' )  QXCHG,  DROP, ;  alias @!
+
 ( Returns signed byte b at address a and post-increments. )
 : b@++ ( a -- a+1 b )  BFETCHINC, ;
 ( Returns unsigned byte c at address a and post-increments. )

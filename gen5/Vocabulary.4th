@@ -128,7 +128,8 @@ variable SGMTSTKPT                ( Segment stack pointer )
 ( Returns referent &h to the end of the current segment. )
 : &here ( -- &h )  targetVoc# #segment segment# createReferent ;
 ( Resolves referent &r to physical address a. )
-: &@ ( &r -- a )  stripReferent dup referentVocabulary #vocabulary@ over referentSegment
+: &@ ( &r -- a )  dup referentSegment 10=if  drop 0 exit  then
+  stripReferent dup referentVocabulary #vocabulary@ over referentSegment
   15=?if  drop  else  @#segment@  then  swap referentOffset + ;
 ( Calculates the distance between &r1 and &r2 [&r1-&r2]. )
 : &- ( &r1 &r2 -- offs )  &@ swap &@ r− ; alias &−
@@ -137,6 +138,7 @@ variable SGMTSTKPT                ( Segment stack pointer )
 
 variable CURRENT-FLAGS            ( Current word flags )
 variable SECTION-FLAGS            ( Current section flags )
+variable FIELD-FLAGS              ( Visibility of fields )
 
 ( Word structure:
   • FLAGS   32 bits
@@ -165,6 +167,8 @@ variable SECTION-FLAGS            ( Current section flags )
 11 constant FLAG.FIELD_ENTER      ( 1: word is a field with the ENTER_FIELD code )
 12 constant FLAG.FIELD_EXIT       ( 1: word is a field with the EXIT_FIELD code )
 13 constant FLAG.CONSTRUCTOR      ( 1: word is the constructor of the class )
+14 constant FLAG.JOINER           ( 1: word starts with a PSP PUSH before a load operation on RAX )
+15 constant FLAG.LINKER           ( 1: word ends with a PSP POP instruction )
 
 --- Word Related Methods ---
 
@@ -177,7 +181,7 @@ variable SECTION-FLAGS            ( Current section flags )
 : &wordName$ ( &w -- w$ )  &wordName& &@ ;
 
 ( Changes the offset of referent &w so that it points at the code field. )
-: word>code ( &w -- &code )  dup &@ 4+ c@ 7+ &+ ;
+: word>code ( &w -- &code )  dup referentSegment 10=unless  dup &@ 4+ c@ 7+ &+  then ;
 ( For 0, returns a referent to the end of the target text segment, otherwise performs word>code. )
 : ?word>code ( &w|0 -- &code )
   ?dupif  word>code  else  targetVoc# §TEXT dup segment# createReferent  then ;
@@ -428,7 +432,7 @@ variable @CURRENTCODE             ( Referent to first byte of code being entered
 ( Looks up target vocabulary with name v$.  If found, returns its vocabulary number #v and true,
   otherwise its original name and false. )
 : findTargetVocabulary ( v$ -- #v t | v$ f )
-  vocabularies@# 0 do  @++ @vocabulary$ 2pick $$= if  drop i unloop true exit  then  loop
+  vocabularies@# 0 do  @++ @vocabulary$ 2pick $$= if  2drop i unloop true exit  then  loop
   drop false ;
 
 --- Constructor ---

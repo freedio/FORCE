@@ -1,5 +1,13 @@
+/**
+  * Exceptions base module.
+  *
+  * --> Contains assembler code <--
+  */
+
 import Forth
-import Log
+import Exception
+import ExceptionHandler
+( import Log )
 
 vocabulary Exceptions
 
@@ -27,22 +35,22 @@ private cell variable EX0       ( Initial exception handler stack pointer )
 private section
 
 ( Logs exception e as "lost under the radar". )
-: lost ( Exception:e -- )  1 "Lost exception %@ under the radar!" WARNING flog ;
-( Logs exception e as "unaught". )
-: uncaught ( Exceptin:e -- )  1 "Uncaught exception %@!" ERROR flog  UNCAUGHT_EXCEPTION abort ;
+: lost ( Exception:e -- )  ( TODO 1 "Lost exception %! under the radar!" WARNING flog ) drop ;
+( Logs exception e as "uncaught". )
+: uncaught ( Exceptin:e -- )  ( TODO 1 "Uncaught exception %!!" ERROR flog  UNCAUGHT_EXCEPTION abort ) drop ;
 
 public section
 
 : throw ( Exception:e -- )
   exdepth 0=if  uncaught  then
-  ex@ ExceptionHandler dup Flags 0bit@ if  Current xchg ?dupif  lost  else  drop  then  else
-  ex> ?dupunless  uncaught  else  ExceptionHandler Current!  then
-  rp@ sp@ ex@ tuck Exception RefPSP! Exception RefRSP!  ex@ ExceptionHandler Next@ branch ;;
+  ex@ dup Flags 0bit@if  Current @! ?dupif  lost  else  drop  then  else
+  ex> ?dupunless  uncaught  else  Current!  then
+  rp@ sp@ ex@ tuck RefPSP! RefRSP!  ex@ @Next rdrop >r ;
 
 === Module Initialization ===
 
 ( Initializes the vocabulary from initialization structure at address @initstr when loading. )
-private init : init ( @initstr -- @initstr )  dup @XSP + @ EX0! EX@! ex! ;
+private init : init ( @initstr -- @initstr )  dup @XSP + @ dup EX0! ex! ;
 
 vocabulary;
 export Exceptions

@@ -64,9 +64,19 @@ variable CODEMODEL                ( Target code model: 0 = inline, 1 = direct, 2
   #vocabulary@ §RELT @#segment@# RELOCATION# u/ 0 do  dup REL.SOURCE + @
   stripReferent 4pick 4pick &within if  dup REL.SOURCE + @ referentOffset 4pick referentOffset −
     2pick swap &+ over REL.SOURCE + @ swap referentOffset! over REL.TARGET + @ swap splitReferent reloc,  then  RELOCATION# + loop  4drop ;
+( Checks if the last contribution was a linker. )
+: linker? ( -- ? )  LINKER @ ;
+( Sets the LINKER variable if word &w is a linker. )
+: ?linker ( &w -- &w )  dup &@ FLAG.LINKER bit@ LINKER ! ;
+( If word &w is a joiner, checks if previous code size is >0 and the last contribution was a linker;
+  if so, the length of the previous code is shortened by the linker size, and the pair a:u is
+  advanced by the RAX PUSH code. )
+: ?joiner ( &w a u -- &w a' u' )  2pick &@ FLAG.JOINER bit@ if
+    2pick Code# 0≠if  linker? if  LINKERTAIL# unallot  JOINERHEAD# +>  then  then  then ;
 ( Appends the net code of word &w with net size u to the current word.  Also copies relocations and
-  generates debug information for it. )
-: copyCode ( &w -- )  &here >r dup code@# #,  dup word>netcode swap Code# r> copyRelocations ;
+  generates debug information for it.  Joiners [∢ FLAG.JOINER] are treated specially. )
+: copyCode ( &w -- )
+  &here >r dup code@# ?joiner #,  ?linker  dup word>netcode swap Code# r> copyRelocations ;
 ( Compiles word &w inline.  If the code fragment is small enough, it is copied, along with its
   relocations and debug info, otherwise a call is inserted. )
 : punchInline ( &w -- ) dup Code# MAXCODE4COPY ≤if  copyCode  else  callCode  then ;
