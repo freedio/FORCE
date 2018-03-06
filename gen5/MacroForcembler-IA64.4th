@@ -601,6 +601,8 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 
 ( Transforms result x into error code #e and false, if negative, otherwise into result x and true. )
 : RESULT ( x -- x t | #e f )  RAX RAX TEST  0< IF  RAX NEG  STC  THEN  RAX PUSH  CMC  RAX RAX SBB ;
+( Transforms outcome x into error code #e and false, if negative, otherwise just returns true. )
+: ERROR ( x -- t | #e f )  RAX RAX TEST  0< IF  RAX NEG  RAX PUSH  STC  THEN  CMC  RAX RAX SBB ;
 
 === Blocks and Loops ===
 
