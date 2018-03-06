@@ -4,6 +4,8 @@
 
 package /linux/struct
 
+import /force/structure/Fundamental
+
 Fundamental structure Stat
 
 Device variable Device            ( describes the device on which this file resides. )

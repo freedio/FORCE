@@ -1,6 +1,8 @@
-import Forth
-import Exceptions
-import MemoryReallocationError
+package /linux/memory
+
+import /force/lang/Forth
+import /force/exception/Exceptions
+import /linux/memory/exception/MemoryReallocationError
 
 vocabulary Memory
 
