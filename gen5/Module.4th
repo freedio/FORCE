@@ -91,12 +91,13 @@ create INITSTRUCT                   ( structure passed to initialization functio
 : composeModulePath ( m$ -- mp$ )  root@  MODULE$ tuck $! "mod/" $$+ swap $$+ ".voc" $$+ ;
 ( Looks up module with name mn$ in the FORCE roots and returns its complete path mp$. )
 : locateModule ( mn$ -- mp$ )  PATH$ dup 0!  roots@# 0 do  dup 2pick $!
-  "mod/" 2pick swap $$+  3pick $$+ fileExists if  drop nip unloop exit  then
+  "mod/" 2pick swap $$+  3pick $$+ ".voc" $$+  debug? if  cr dup 1 "Checking ‹%s›"|.  then
+  fileExists if  drop nip unloop exit  then
   count +  loop  2drop  1 "Module «%s» not found in FORCE root"|abort ;
 ( Loads module m$ [no file extension!] and adds its vocabulary to the vocabulary list, returning its
   index #v. )
 : loadModule ( m$ -- #v )  locateModule  debug? if  cr dup 1 "Loading module «%s»"|log  then
-  composeModulePath newFile name! r/o openFile unlessever
+  newFile name! r/o openFile unlessever
     >errtext swap name@ 2 "Error while opening input module «%s»: %s!"|abort  then
   MODULE_HEADER dup 128 3pick readFile!  createVocabulary >vocabularies targetVoc!
   #segments 0 do  d@++ top-> 3pick seekFile unlessever
