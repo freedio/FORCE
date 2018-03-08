@@ -1,7 +1,8 @@
+package force/object/
 
-import Object
-import TypeCastException
-import LinuxMemory
+import force/object/Object
+import force/exception/TypeCastException
+import force/memory/Memory
 
 Object class Class
 

@@ -4,12 +4,12 @@
   * --> Contains assembler code <--
   */
 
-package /force/exception
+package force/exception/
 
-import /force/lang/Forth
-import /force/exception/Exception
-import /force/exception/ExceptionHandler
-( import Log )
+import force/lang/Forth
+import force/exception/Exception
+import force/exception/ExceptionHandler
+( import force/logging/Log )
 
 vocabulary Exceptions
 

@@ -2,9 +2,9 @@
   * Memory page for small objects (size from 1 to 250 bytes).
   */
 
-import /force/memory
+package force/memory/
 
-import /force/memory/Page
+import force/memory/Page
 
 MemoryPage structure SmallPage
 

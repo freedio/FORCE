@@ -1,6 +1,7 @@
 ( Decodes a Unix error code into a meaningful message. )
 vocabulary UnixError
   requires" FORTH.voc"
+      requires" IO.voc"
   requires" StringFormat.voc"
 
 create ERROR-TEXTS
@@ -145,11 +146,13 @@ create ERROR-TEXTS
   132 ,  "ERFKILL",           "Operation not possible due to RF-kill",
 
   133 ,  "EHWPOISON",         "Memory page has hardware error",
+  0 ,
 
 
 === API ===
 
-: >errtext ( errno -- msg$ )  dup 1 134 between if  1- 3* ERROR-TEXTS swap cells+  2cells+ @  else
-  1 "Unknown error code %d" |$|  then ;
+: >errtext ( errno -- msg$ )
+  ERROR-TEXTS  begin dup @ while  2dup @ =if  nip cell+ count + exit  then  cell+ count +  count +  repeat
+  drop 1 "Unknown error code %d" |$| ;
 
 vocabulary;

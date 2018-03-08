@@ -1,4 +1,6 @@
-import Forth
+package force/object/
+
+import force/lang/Forth
 
 vocabulary ObjectBase
 

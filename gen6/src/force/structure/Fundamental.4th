@@ -2,7 +2,7 @@
   * The empty structure.
   */
 
-package /force/structure
+package force/structure/
 
 vocabulary Fundamental
 

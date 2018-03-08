@@ -45,7 +45,11 @@ vocabulary InterpreterWords
 ( Marks the target vocabulary as a base for structures. )
 : structbase ( -- )  §TEXT #segment@ TEXT.VOCFLAGS + VOC%STRUCT bit+! ;
 
-=== Module, Class and Vocabulary Operations ===
+=== Module, Package, Class and Vocabulary Operations ===
+
+( Sets the package name. )
+: package ( >name -- )  readWord  info? if  espace dup "$"..  then
+  dup c@ 1+ PACKAGE$ swap cmove ;
 
 ( Creates vocabulary <name>, adds it to the searchlist and makes it the current target vocabulary. )
 : vocabulary ( >name -- )  readWord  info? if  espace dup "$"..  then
@@ -109,8 +113,8 @@ vocabulary InterpreterWords
 : private ( -- )  CURRENT-FLAGS dup @ 3 andn SCOPE.PRIVATE or swap ! ;
 ( Sets PROTECTED scope. )
 : protected ( -- )  CURRENT-FLAGS dup @ 3 andn SCOPE.PROTECTED or swap ! ;
-( Sets PACKAGE scope. )
-: package ( -- )  CURRENT-FLAGS dup @ 3 andn SCOPE.PACKAGE or swap ! ;
+( Sets PACKAGE LOCAL scope. )
+: restricted ( -- )  CURRENT-FLAGS dup @ 3 andn SCOPE.PACKAGE or swap ! ;
 ( Sets PUBLIC scope. )
 : public ( -- )  CURRENT-FLAGS dup @ 3 andn SCOPE.PUBLIC or swap ! ;
 ( Sets STATIC flag. )
@@ -177,7 +181,7 @@ vocabulary InterpreterWords
   CURRENT-FLAGS @ FLAG.STATIC bit? unless  createField  else  createVariable  then ;
 ( Defines constant "name" with value val. )
 : constant ( val >name -- )  LINKER 0!
-  depth 1− dup >r ADP+ readWord  info? if  espace dup $..  then  createConstant  r> ADP- ;
+  depth dup >r ADP+ readWord  info? if  espace dup $..  then  createConstant  r> 1− ADP- ;
 ( Starts colon definition "name". )
 : (colon) ( >name -- )  readWord  info? if  espace dup $..  then
   newWord currentCode! >text ENTER,  instance? if  ENTER_INSTANCE,  then  compile ;

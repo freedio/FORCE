@@ -1,7 +1,7 @@
-package /force/exception
+package force/exception/
 
-import Forth
-import Exception
+import force/lang/Forth
+import force/exception/Exception
 
 Exception class TypeCastException
 

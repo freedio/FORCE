@@ -11,6 +11,22 @@ vocabulary Vocabulary
   requires" Referent.voc"
   requires" Exception.voc"
 
+=== FORCE root ===
+
+variable @ROOTS                   ( Heap number of list of FORCE roots )
+variable #ROOTS                   ( Number of FORCE roots )
+
+( Returns FORCE root list heap #h. )
+: roots ( -- #h )  @ROOTS ?heap @ ;
+( Returns address a of FORCE root list and the number of entries in the list. )
+: roots@# ( -- a # )  roots heap@ #ROOTS @ ;
+( Adds string with address a and length # to the roots. )
+: roots+ ( a # -- )  dup dup 1+ roots heapAllot@ c!++ swap cmove  #ROOTS 1+! ;
+( Lists all the roots to the console. )
+: listRoots ( -- )  roots@# 0 do  dup cr 1 "• %s"|.  count +  loop  drop ;
+( Returns the primary FORCE root, or aborts if no roots are specified. )
+: root@ ( -- r$ )  roots@# 0=if  "No FORCE root specified!"abort  then ;
+
 === Vocabulary List Maintenance ===
 
 variable @VOCABULARIES            ( Heap number of list of loaded vocabularies )

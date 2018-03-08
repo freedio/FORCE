@@ -2,10 +2,10 @@
   * The exception handler structure.
   */
 
-package /force/exception
+package force/exception/
 
-import /force/lang/Forth
-import /force/structure/Fundamental
+import force/lang/Forth
+import force/structure/Fundamental
 
 Fundamental structure ExceptionHandler
 

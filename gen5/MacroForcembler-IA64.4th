@@ -498,7 +498,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 ( Inserts code to push a variable. )
 : DOVAR, ( -- a )  SAVE,  targetVoc# §DATA dup #segment# createReferent [] RAX LEA  nolink ;
 ( Inserts code to push a constant. )
-: DOCONST, ( -- x )  SAVE,  ?dupif  1 ADP-  # RAX MOV  else  RAX RAX XOR  then  nolink ;
+: DOCONST, ( -- x )  SAVE,  1 ADP- ?dupif  # RAX MOV  else  RAX RAX XOR  then  nolink ;
 ( Inserts code to fetch the contents of a signed byte variable. )
 : FETCHBVAR, ( -- x )
   SAVE,  BYTE PTR targetVoc# §DATA dup #segment# createReferent [] RAX MOVSX  nolink ;

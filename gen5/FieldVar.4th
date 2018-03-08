@@ -68,7 +68,7 @@ create FIELDNAME$  256 0allot     ( Buffer for getter and setter name )
   -8=?if  drop  STOREQVAR,  else
   assertType  STOREQVAR,  then then then then then then then then  EXIT_FIELD,  currentCode#!
   segment>  >data abs cell min 0#, segment>  r> drop 1 ADP- ;
-: createConstant ( value c$ -- )  1 ADP+ createWord currentCode!
+: createConstant ( value c$ -- )  createWord currentCode!
   >text  ENTER_FIELD,  DOCONST,  EXIT_FIELD,  currentCode#!  segment> ;
 
 vocabulary;

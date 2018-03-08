@@ -1,6 +1,6 @@
-package /linux/memory/trouble
+package linux/memory/trouble/
 
-import /force/exception/Exception
+import force/exception/Exception
 
 Exception class MemoryReallocationError
 

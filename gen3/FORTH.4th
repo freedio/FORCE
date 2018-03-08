@@ -691,6 +691,8 @@ create XP  512 cells 0allot
 : csame ( a1 a2 # -- ? )  CSAME, ;
 ( Compares strings a1$ and a2$ for equality, returning true if both are equal, otherwise false. )
 : $$= ( a1$ a2$ -- ? )  STREQ, ;
+( Compares buffers a1 and a2 with length # for equality. )
+: aa#= ( a1 a2 # -- ? )  BUFEQ, ;
 ( Consumes u characters from buffer with length # at address a. )
 : +> ( a # u -- a+u #-u )  ADVANCE, ;
 ( Converts char buffer a with length # to a counted string at address a$. )

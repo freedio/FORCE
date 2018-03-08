@@ -32,6 +32,7 @@ requires" IO.voc"
 :( Writes # bytes from buffer a to file descriptor fd, returning the amount of bytes actually
    written. )
 : sysWriteFile ( a # fd -- u t | errno f )  SYS_WRITE, >err2 ;
+: sysMakeDirectory ( fnz -- t | errno f )  &755 SYS_MKDIR, >err1 ;
 
 :( Sets the program break to u1 [or queries it if 0], returning the new [or current] break u2. )
 : pgmbrk ( u1|0 -- u2 )  SYS_BRK, ;

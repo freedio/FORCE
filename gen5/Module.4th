@@ -16,6 +16,8 @@ vocabulary Module
 create SOURCE$  256 0allot          ( Name of the source file [without extension] )
 create OUTPUT$  256 0allot          ( Name of the output file [without extension] )
 create MODULE$  256 0allot          ( Name of the module [with extension] )
+create PACKAGE$ 256 0allot          ( Name of the current package )
+create PATH$    256 0allot          ( Build area for the module path )
 
 === Module Header Structure ===
 
@@ -83,10 +85,18 @@ create INITSTRUCT                   ( structure passed to initialization functio
 : createHeader ( -- )  128 MODULE_HEADER dup 128 cellu/ 0 fill  #segments 0 do
   2dup d!  4+  i #segmentHeap# dup heap#  rot d!++  swap heap# 16 >|  rot + swap  loop  2drop ;
 
+( Prefixes module name m$ with the package prefix. )
+: +package$ ( m$ -- m$' ) PACKAGE$ swap $$+ ;
+( Composes module path mp$ from module name m$. )
+: composeModulePath ( m$ -- mp$ )  root@  MODULE$ tuck $! "mod/" $$+ swap $$+ ".voc" $$+ ;
+( Looks up module with name mn$ in the FORCE roots and returns its complete path mp$. )
+: locateModule ( mn$ -- mp$ )  PATH$ dup 0!  roots@# 0 do  dup 2pick $!
+  "mod/" 2pick swap $$+  3pick $$+ fileExists if  drop nip unloop exit  then
+  count +  loop  2drop  1 "Module «%s» not found in FORCE root"|abort ;
 ( Loads module m$ [no file extension!] and adds its vocabulary to the vocabulary list, returning its
   index #v. )
-: loadModule ( m$ -- #v )  debug? if  cr dup 1 "Loading module «%s»"|log  then
-  MODULE$ tuck $!  ".voc" $$+ newFile name! r/o openFile unlessever
+: loadModule ( m$ -- #v )  locateModule  debug? if  cr dup 1 "Loading module «%s»"|log  then
+  composeModulePath newFile name! r/o openFile unlessever
     >errtext swap name@ 2 "Error while opening input module «%s»: %s!"|abort  then
   MODULE_HEADER dup 128 3pick readFile!  createVocabulary >vocabularies targetVoc!
   #segments 0 do  d@++ top-> 3pick seekFile unlessever
@@ -95,8 +105,8 @@ create INITSTRUCT                   ( structure passed to initialization functio
   discardFile  targetVoc# dup resolveDependencies  dup applyRelocations  dup voc>dict  dup runInits
   dup targetVoc! ;
 ( Saves the target vocabulary as module m$ [no file extension!]. )
-: saveModule ( m$ -- )  dup freezeVocabulary
-  MODULE$ tuck $!  ".voc" $$+ newFile name! w/o ?create ?truncate &644 mode! openFile unlessever
+: saveModule ( m$ -- )  +package$ dup freezeVocabulary  composeModulePath  dup createPathComponents
+  newFile name! w/o ?create ?truncate &644 mode! openFile unlessever
     >errtext swap name@ 2 "Error while opening output module «%s»: %s!"|abort  then
   createHeader  MODULE_HEADER 128 2pick writeFile!
   #segments 0 do  i #segment@# 16 >| 2pick writeFile!  loop  discardFile ;

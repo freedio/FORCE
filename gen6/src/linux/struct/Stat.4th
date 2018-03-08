@@ -2,9 +2,9 @@
   * Linux Stat structure.
   */
 
-package /linux/struct
+package linux/struct/
 
-import /force/structure/Fundamental
+import force/structure/Fundamental
 
 Fundamental structure Stat
 

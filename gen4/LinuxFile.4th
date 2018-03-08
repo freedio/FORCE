@@ -138,4 +138,23 @@ cell+ constant FILE#
     swap r> name@ 3 "Error while writing file «%s»: only %d bytes of %d were written!"|abort  then
   r> 3drop ;
 
+create FILENAME$   256 0allot     ( Buffer for the FNZ name. )
+create FILENAMEZ   256 0allot     ( Buffer for the filename. )
+: $>z ( f$ -- fnz )  FILENAME$ tuck 256 0 cfill  count FILENAME$ swap cmove ;
+( Checks if file with path fn$ exists. )
+: fileExists ( fn$ -- ? )  $>z  4 SYS_ACCESS, 0= ;
+
+( Creates directory with path fnz. )
+: mkdir ( fnz -- )  dup 0count FILENAMEZ 2dup c! 1+ swap cmove
+  sysMakeDirectory unless  17=?if  drop exit  then
+    >errtext FILENAMEZ 2 "Error while creating directory ‹%s›: %s"|abort  then ;
+( Creates all non-existant directories of path fnz with length #. )
+: mkdirs ( fnz # -- )  ?dupunless  drop exit  then  2dup '/' rcfind ?dup if  nip ( fnz u )
+  1− 2dup + 0c!  2dup mkdirs  2dup + '/'c!  then  drop mkdir ;
+
+( Creates the non-existent intermediate directories of path p$.  This stops at the last slash,
+  i.e. in a path of "./a/b/", both a and b are deemed intermediate. )
+: createPathComponents ( p$ -- )
+  dup $>z swap c@  2dup '/' rcfind ?dup if  1− nip dup 2pick swap + 0c!  2dup mkdirs  then  2drop ;
+
 vocabulary;

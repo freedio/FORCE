@@ -1,7 +1,7 @@
-package /force/exception
+package force/exception/
 
-import /force/lang/Forth
-import /force/object/Object
+import force/lang/Forth
+import force/object/Object
 
 Object class Exception
 

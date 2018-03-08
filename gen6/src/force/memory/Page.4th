@@ -2,10 +2,10 @@
   * Basic page structure of a memory page.
   */
 
-import /force/memory
+import force/memory/
 
-import /force/lang/Forth
-import /force/structure/Fundamental
+import force/lang/Forth
+import force/structure/Fundamental
 
 Fundamental structure Page
 

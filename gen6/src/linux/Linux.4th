@@ -4,9 +4,9 @@
   * --> Contains Assembler Code <---
   */
 
-package /linux
+package linux/
 
-import /force/lang/Forth
+import force/lang/Forth
 
 vocabulary Linux
 

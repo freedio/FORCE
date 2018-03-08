@@ -49,7 +49,7 @@ create SWITCH?$ ," switch?"                 ( Name of switch testing method in d
 : --arg ( @def a # -- )  2dup '=' cfind ?dupif  argval2  else  argname2  then ;
 :( Processes short option a with length # [contains the leading "-"]. )
 : -arg ( @def a # -- )
-  0 do  isswitch if  switch  else  imax i − -option unloop exit  then  loop  2drop ;
+  0 do  isswitch if  switch  else  limit i − -option unloop exit  then  loop  2drop ;
 :( Processes non-option argument a with length #. )
 : arg ( @def a # -- )  arg$ >$ ARGUMENT$ rot tuck findWord if  execute  else  4drop  then ;
 :( Processess command line argument a with length #. )
@@ -60,6 +60,15 @@ create SWITCH?$ ," switch?"                 ( Name of switch testing method in d
 :( Parses the command line for arguments using command line definition @def. )
 : parseCommandLine ( @def -- )
   @args cell+ #args @ 1 do @++ 0count  3pick -rot processArg loop  2drop ;
+
+( Copies string a of length # to a$ and returns arg$. )
+: z>$ ( a # a$ -- a$ )  dup >r 2dup c! 1+ swap cmove  r> ;
+( Looks up environment variable with name n$.  If found, returns its value v$ and true, otherwise
+  the original name and false. )
+: $env ( n$ -- v$ t | n$ f )  @envs #envs @ 0 do
+  dup @ 0count ( n$ @envs @env #env )  3 pick count rot ( n$ @envs @env @n n# #env ) u<?if
+  aa#= if @ nip 0count 2dup '=' cfind +> arg$ z>$ true unloop exit then else 3drop then  cell+  loop
+  drop false ;
 
 :( Prints the command line and environment arguments to stdout. )
 : cmdline>stdout ( -- )

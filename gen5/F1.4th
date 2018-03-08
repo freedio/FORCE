@@ -11,6 +11,7 @@ vocabulary F1
   requires" LogLevel.voc"
   requires" Memory.voc"
   requires" CmdLine.voc"
+  requires" LinuxFile.voc"
   requires" FileIO.voc"
   requires" UTF-8.voc"
   requires" Referent.voc"
@@ -227,16 +228,31 @@ create CLAUSE$  256 0allot        ( Buffer for building a clause )
 
 === Main Program ===
 
+( Sets the FORCE roots to r$. )
+: setRoots ( r$ -- )  info? if  cr dup 1 "FORTH root = ‹%s›"|.  then
+  count  begin  2dup ':' cfind dup while  2pick over 1− roots+ +>  repeat  drop roots+
+  debug? if  listRoots  then ;
+( Determines the FORTh root and sets the environment for it. )
+: froot ( -- )
+  ROOT$ dup c@ if  setRoots  exit  then
+  drop "ROOT4CE=" $env unless
+    "FORTH root (environment var ROOT4CE, or command line argument --root) not present"abort  then
+  setRoots ;
+( Looks up source file with name sn$ in the FORCE roots and returns its complete path sp$. )
+: locateSource ( sn$ -- sp$ )  PATH$ dup 0!  roots@# 0 do  dup 2pick $!
+  "src/" 2pick swap $$+  3pick $$+ fileExists if  drop nip unloop exit  then
+  count +  loop  2drop  1 "Source file «%s» not found in FORCE root"|abort ;
+
 ( Main program )
 :: program ( -- )  INITPROG,
   "FORCE 1.0.0α". cr
   F1args parseCommandLine
-  initA4  prod-mode  1 allocPages PAGE# + initModule
+  froot  initA4  prod-mode  1 allocPages PAGE# + initModule
   tick compiler COMPARSER !  tick interpreter IMPARSER !  interpret
   openConsole sourcefile@ ?dupif
     MODULE$ tuck over c@ 1+ cmove  dup hasExt? unless  ".4th" $$+  then
-    info? if  cr dup 1 "Source Module: %s."|log  then  source
-    else  cr "No source file → Interpreter". then
+    locateSource  info? if  cr dup 1 "Source Module: %s."|log  then  source
+    else  info? if  cr "No source file → Interpreter".  then then
   begin  readWord  ?empty$ not while  F1 PARSER @ execute  repeat  drop
   debug? if  cr "Good-bye!". then  bye ;; >main
 

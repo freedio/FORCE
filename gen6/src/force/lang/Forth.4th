@@ -4,7 +4,7 @@
   * FORCE Base Vocabulary.
   */
 
-package /force/lang
+package force/lang/
 
 vocabulary Forth
 
@@ -521,11 +521,6 @@ cell+ constant ExHandler#
 : ≥ ( n1 n2 -- n1≥n2 )  ISNOTLESS, ;  alias >=
 ( Tests if u1 is greater than or equal to u2. )
 : u≥ ( u1 u2 -- u1≥u2 )  ISNOTBELOW, ;  alias u>=
-
-=== Special Functions ===
-
-( Converts Unicode character uc to an 8-byte UTF-8 representation on the stack. )
-: >utf8 ( uc -- uu )  TO_UTF8, ;
 
 === Module Initialization ===
 

@@ -2,6 +2,8 @@
   * Base class without a superclass.
   */
 
+package force/object/
+
 import Forth
 import ObjectBase
 
