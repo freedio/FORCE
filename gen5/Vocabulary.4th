@@ -386,7 +386,7 @@ variable Deferred
 ( Adds vocabulary #voc as a dependency of the target vocabulary. )
 : addDependency ( #voc -- )  targetVoc# =?if  drop exit  then
   >dept  §STRG #segment# d,  dup d,  segment>
-  >strg #vocabulary@ §TEXT @#segment@  TEXT.VOCWORD + 4+ dup c@ 1+ #,  segment> ;
+  >strg #module$ unless  1 "Vocabulary %d has no module name!"|abort  then  dup c@ 1+ #,  segment> ;
 ( Assert that vocabulary #voc is registered as a dependency in the target vocabulary. )
 : assertDependency ( #voc -- )  §DEPT #segment@# DEPENDENCY# u/ 0 do
   dup DEP.INDEX + d@ ( #voc dep[] d# ) 2pick =if  2drop unloop exit  then  DEPENDENCY# + loop  drop

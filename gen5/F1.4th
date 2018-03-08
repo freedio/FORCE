@@ -240,7 +240,8 @@ create CLAUSE$  256 0allot        ( Buffer for building a clause )
   setRoots ;
 ( Looks up source file with name sn$ in the FORCE roots and returns its complete path sp$. )
 : locateSource ( sn$ -- sp$ )  PATH$ dup 0!  roots@# 0 do  dup 2pick $!
-  "src/" 2pick swap $$+  3pick $$+ fileExists if  drop nip unloop exit  then
+  "src/" 2pick swap $$+  3pick $$+  debug? if  cr dup 1 "Checking ‹%s›"|.  then
+  fileExists if  drop nip unloop exit  then
   count +  loop  2drop  1 "Source file «%s» not found in FORCE root"|abort ;
 
 ( Main program )

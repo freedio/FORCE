@@ -4,8 +4,8 @@
 
 package force/object/
 
-import Forth
-import ObjectBase
+import force/lang/Forth
+import force/object/ObjectBase
 
 ObjectBase class Object
 
