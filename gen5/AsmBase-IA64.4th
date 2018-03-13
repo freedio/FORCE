@@ -666,14 +666,14 @@ bytevar OP#
 : >opsize ( op -- op # )  dup .size #BYTE > negate ;
 : !no64 ( -- )  opsize@ #DWORD > if  INVALID_OPERAND_SIZE$ error  then ;
 : r/mreg! ( r/mop regop -- )  reg! !stdr/m modr/m! ;
-: >mask  ( # -- % )
-       0 =?if  drop 1  exit  then
-   #BYTE =?if  drop $7F  exit  then
-   #WORD =?if  drop $7FFF  exit  then
-  #DWORD =?if  drop $7FFFFFFF  exit  then
-  #QWORD =?if  drop $7FFFFFFFFFFFFFFF  exit  then
-  INVALID_OPERAND_SIZE$ error ;
-: fits? ( n # -- n # ? )  over abs over >mask over and = ;
+: range  ( n # -- ? )
+       0 =?if  drop 0=  exit  then
+   #BYTE =?if  drop -128 256 within  exit  then
+   #WORD =?if  drop -32768 65536 within  exit  then
+  #DWORD =?if  drop -2147483648 4294967296 within  exit  then
+  #QWORD =?if  drop true  then
+  drop INVALID_OPERAND_SIZE$ error ;
+: fits? ( n # -- n # ? )  2dup range 4711.s ;
 : !fits ( n # -- n # )  fits? unless  IMMEDIATE_TOO_BIG$ error  then ;
 : !size= ( op1 op2 -- op1 op2 )  over .size over .size - if  OPERAND_SIZE_MISMATCH$ error  then ;
 : reladdr ( size offset -- )
@@ -828,7 +828,7 @@ bytevar OP#
 : jmpcall-imm ( opc imm )
   drop imm@ there - -126 130 within near? andn reloc? andn if  dup if  jmp-rel8 exit  then  then
   imm@ swap addrwidth@ DWORD min dup 1+  there + reladdr $E8+ op&,
-  reloc? if  reloc@ word>code &here REL.REL32 reloc,  then  drop cleanup ;
+  reloc? if  reloc@ &here REL.REL32 reloc,  then  drop cleanup ;
 : jmpcall-far ( opc addr )  FAR_CALL_UNSUPPORTED$ error  swap $50 * $9A+ op, ;
 : jmpcall-r/m ( opc r/m )  swap 2* 2+ reg! modr/m! $FF op, ;
 : jmpcall ( target / opc )

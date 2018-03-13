@@ -394,6 +394,15 @@ variable Deferred
 
 === Word Maintenance ===
 
+/* Word structure:
+
+ udword FLAGS
+ string NAME
+  uword CODELENGTH
+ #bytes CODE
+
+ */
+
 variable #CURRENTWORD             ( Number of complete words in the target vocabulary. )
 variable @CURRENTWORD             ( Referent to first byte of the current word )
 variable @CURRENTCODE             ( Referent to first byte of code being entered )

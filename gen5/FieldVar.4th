@@ -19,7 +19,7 @@ create FIELDNAME$  256 0allot     ( Buffer for getter and setter name )
   %WORD.SCOPE FIELD-FLAGS @ andn  CURRENT-FLAGS dup @ >r andn!  FIELDNAME$ tuck $!  1 ADP+
   createWord currentCode!  >text  ENTER_FIELD,  DOFIELD,  EXIT_FIELD,  currentCode#!  segment>
   FIELDNAME$ dup dup 1c+! count + 1- '@'c!  r@ CURRENT-FLAGS !
-  createWord currentCode!  >text  ENTER_FIELD,  dup
+  createWord ( getter ) currentCode!  >text  ENTER_FIELD,  dup
   -1=?if  drop  FETCHBFIELD,  else
   1=?if  drop  FETCHCFIELD,  else
   -2=?if  drop  FETCHSFIELD,  else
@@ -31,7 +31,7 @@ create FIELDNAME$  256 0allot     ( Buffer for getter and setter name )
   drop  FETCHQFIELD,  then then then then then then then then
   EXIT_FIELD, currentCode#!  segment>
   FIELDNAME$ dup count + 1- '!'c!  r@ CURRENT-FLAGS !
-  createWord currentCode!  >text  ENTER_FIELD,  dup
+  createWord ( setter ) currentCode!  >text  ENTER_FIELD,  dup
   1=?if  drop  STORECFIELD,  else
   -1=?if  drop  STORECFIELD,  else
   2=?if  drop  STOREWFIELD,  else
@@ -40,13 +40,18 @@ create FIELDNAME$  256 0allot     ( Buffer for getter and setter name )
   -4=?if  drop  STOREDFIELD,  else
   8=?if  drop  STOREQFIELD,  else
   -8=?if  drop  STOREQFIELD,  else
-  assertType  STOREQFIELD,  then then then then then then then then  EXIT_FIELD,  currentCode#!
-  segment>  abs cell min class#+  r> drop  1 ADP- ;
+  assertType  STOREQFIELD,  then then then then then then then then
+  EXIT_FIELD,  currentCode#!  segment>
+  §TEXT #segment@ TEXT.VOCFLAGS + VOC%STRUCT bit@ if
+    r@ CURRENT-FLAGS !  FIELDNAME$ dup count + 1− '#'c!  r@ CURRENT-FLAGS !
+    createWord ( offset ) currentCode!  >text
+    ENTER_FIELD,  FIELDOFFSET,  EXIT_FIELD,  currentCode#!  segment>  then
+  abs cell min class#+  r> drop  1 ADP- ;
 : createVariable ( t f$ -- )
   %WORD.SCOPE FIELD-FLAGS @ andn  CURRENT-FLAGS dup @ >r andn!  FIELDNAME$ tuck $!  1 ADP+
   createWord currentCode!  >text  ENTER_FIELD,  DOVAR,  EXIT_FIELD, currentCode#!  segment>
   FIELDNAME$ dup dup 1c+! count + 1- '@'c!  r@ CURRENT-FLAGS !
-  createWord currentCode!  >text  ENTER_FIELD,  dup
+  createWord ( getter ) currentCode!  >text  ENTER_FIELD,  dup
   -1=?if  drop  FETCHBVAR,  else
   1=?if  drop  FETCHCVAR,  else
   -2=?if  drop  FETCHSVAR,  else
@@ -57,7 +62,7 @@ create FIELDNAME$  256 0allot     ( Buffer for getter and setter name )
   8=?if  drop  FETCHQVAR,  else
   drop  FETCHQVAR,  then then then then then then then then  EXIT_FIELD,  currentCode#!  segment>
   FIELDNAME$ dup count + 1- '!'c!  r@ CURRENT-FLAGS !
-  createWord currentCode!  >text  ENTER_FIELD,  dup
+  createWord ( setter ) currentCode!  >text  ENTER_FIELD,  dup
   1=?if  drop  STORECVAR,  else
   -1=?if  drop  STORECVAR,  else
   2=?if  drop  STOREWVAR,  else

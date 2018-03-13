@@ -196,6 +196,10 @@ cell+ constant ExHandler#
 : u%÷ ( u₁ u₂ -- u₁%u₂ u₁÷u₂ )  UMODTHROUGH, ;  alias umod/
 ( Calculates the quotient and rest of the integer division u₂ through u₁. )
 : ur% ( u₁ u₂ -- u₂%u₁ u₂÷u₁ )  URMODTHROUGH, ;  alias urmod/
+( Returns n = n₁+n₂×n₃. )
+: *+ ( n₁ n₂ n₃ -- n )  TIMESPLUS, ;
+( Returns u = u₁+u₂×u₃. )
+: u*+ ( u₁ u₂ u₃ -- u )  UTIMESPLUS, ;
 
 ( Increments second of stack. )
 : nxt ( x₁ x₂ -- x₁+1 x₂ )  INCS, ;
@@ -475,7 +479,7 @@ cell+ constant ExHandler#
 ( Stores top of float stack to address a. )
 : f! ( a -- :F: r -- )  FSTORE, ;
 
-=== Storeage Arithmetics ===
+=== Storage Arithmetics ===
 
 ( Adds c to byte at address a. )
 : c+! ( c a -- )  CADD, ;
@@ -485,6 +489,34 @@ cell+ constant ExHandler#
 : d+! ( w a -- )  DADD, ;
 ( Adds q to quad-word at address a. )
 : q+! ( q a -- )  QADD, ;  alias +!
+( Subtracts c from byte at address a. )
+: c−! ( c a -- )  CSUB, ;  alias c-!
+( Subtracts w from word at address a. )
+: w−! ( w a -- )  WSUB, ;  alias w-!
+( Subtracts d from double-word at address a. )
+: d−! ( w a -- )  DSUB, ;  alias d-!
+( Subtracts q from quad-word at address a. )
+: q−! ( q a -- )  QSUB, ;  alias −!  alias q-!  alias -!
+
+=== Block Operations ===
+
+( Fills byte buffer of length # at address a with c. )
+: cfill ( a # c -- )  CFILL, ;
+( Fills word buffer of length # at address a with w. )
+: wfill ( a # w -- )  WFILL, ;
+( Fills double-word buffer of length # at address a with d. )
+: dfill ( a # d -- )  CFILL, ;
+( Fills quad-word buffer of length # at address a with q. )
+: qfill ( a # q -- )  QFILL, ;
+( Fills cell buffer of length # at address a with x. )
+: fill ( a # x -- )  QFILL, ;
+
+=== Short String Operations ===
+
+( Returns address a and ength # of short string a$. )
+: count ( a$ -- a # )  COUNT, ;
+( Appends unsigned byte c to counted string in buffer at a$. )
+: c>$ ( c a$ -- )  CAPPEND$, ;
 
 === Conditions ===
 

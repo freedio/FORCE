@@ -16,6 +16,7 @@ private static section --- Interna --------------------------------
 01 constant LINUX.WRITE
 02 constant LINUX.OPEN
 03 constant LINUX.CLOSE
+04 constant LINUX.STAT
 
 12 constant LINUX.BRK
 
@@ -38,12 +39,19 @@ public static section --- API -------------------------------------
 : stat ( fnz Stat:s -- t | #e f )  LINUX.STAT LINUX-CALL-2,  ERROR, ;
 
 ( Sets program break a (if a≠0) and returns new (a≠0) or current (a=0) program break. )
-: pgmbrk ( a|0 -- a' t | #e f )  LINUX.BRK LINUX-CALL-1,  RESULT, ;
+: pgmbreak ( a|0 -- a' t | #e f )  LINUX.BRK LINUX-CALL-1,  RESULT, ;
 
 ( Terminates the program with exit code n.  Does not return. )
 : terminate ( n -- )  LINUX.EXIT LINUX-CALL-1, ;
 ( Terminates the program successfully. )
 : bye ( -- )  0 terminate ;
+
+=== Simple Outputs ===
+
+( Prints a$ to stdout. )
+: out. ( a$ -- )  1 swap count write ;
+( Prints a$ to stderr. )
+: err. ( a$ -- )  2 swap count write ;
 
 vocabulary;
 export Linux

@@ -174,7 +174,9 @@ vocabulary InterpreterWords
 
 ( Creates address "name". )
 : create ( >name -- )  readWord  info? if  espace dup $..  then
-  newWord currentCode! >text ENTER_FIELD,  DOVAR,  EXIT_FIELD, currentCode#!  segment> ;
+  newWord currentCode! >text ENTER_FIELD,
+  CURRENT-FLAGS @ FLAG.STATIC bit? unless  DOFIELD,  else  DOVAR,  then
+  EXIT_FIELD, currentCode#!  segment> ;
 ( Defines variable "name".  Inside a class, variables must be typed, regardless of whether they are
   static or not; inside vocabularies, a size specifier [byte, word, ...] must precede. )
 : variable ( type >name -- )  readWord  info? if  espace dup $..  then  LINKER 0!
@@ -199,6 +201,13 @@ vocabulary InterpreterWords
   symbol>dict  Unfulfilled 1+! ;
 ( Resolves deferred word "name". )
 : fulfills ( >name -- )  readWord info? if  espace dup $..  then  @CURRENTWORD @ swap fulfill ;
+
+=== Heap Allocation ===
+
+( Reserves u bytes in the data segment of the current target vocabulary. )
+: allot ( u -- )  >data allot segment> ;
+( Reserves u zero bytes in the data segment of the current target vocabulary. )
+: allotz ( u -- )  >data allotz segment> ;
 
 === Simple Types ===
 

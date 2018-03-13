@@ -4,9 +4,16 @@ vocabulary Clauses
   requires" FORTH.voc"
   requires" IO.voc"
   requires" OS.voc"
+  requires" StringFormat.voc"
+  requires" Vocabulary.voc"
   requires" AsmBase-IA64.voc"
   requires" Forcembler-IA64.voc"
   requires" MacroForcembler-IA64.voc"
+  requires" Compiler.voc"
+
+=== Stack Operations ===
+
+: _#pick ( ... # -- ... x )  1 ADP+  RAX PUSH  1 ADP-  CELLS [RSP] RAX MOV ;
 
 === Stack Arithemtic Clauses ===
 
@@ -182,15 +189,33 @@ vocabulary Clauses
 
 === Memory Arithmetics ===
 
-: _#c+! ( a _c -- )  # BYTE PTR 0 [RAX] ADD  RAX POP ;
-: _#w+! ( a _w -- )  # WORD PTR 0 [RAX] ADD  RAX POP ;
-: _#d+! ( a _d -- )  # DWORD PTR 0 [RAX] ADD  RAX POP ;
-: _#q+! ( a _q -- )  # QWORD PTR 0 [RAX] ADD  RAX POP ;  alias _#+!
+( Adds _c to byte at address a. )
+: _#c+! ( a _c -- )  # BYTE PTR 0 [RAX] ADD  DROP, ;
+( Adds _w to word at address a. )
+: _#w+! ( a _w -- )  # WORD PTR 0 [RAX] ADD  DROP, ;
+( Adds _d to double-word at address a. )
+: _#d+! ( a _d -- )  # DWORD PTR 0 [RAX] ADD  DROP, ;
+( Adds _q to quad-word at address a. )
+: _#q+! ( a _q -- )  # QWORD PTR 0 [RAX] ADD  DROP, ;  alias _#+!
 
-: _#c-! ( a _c -- )  # BYTE PTR 0 [RAX] SUB  RAX POP ;  alias _#c−!
-: _#w-! ( a _w -- )  # WORD PTR 0 [RAX] SUB  RAX POP ;  alias _#w−!
-: _#d-! ( a _d -- )  # DWORD PTR 0 [RAX] SUB  RAX POP ;  alias _#d−!
-: _#q-! ( a _q -- )  # QWORD PTR 0 [RAX] SUB  RAX POP ;  alias _#q−!  alias _#-!  alias _#−!
+( Subtracts _c from byte at address a. )
+: _#c-! ( a _c -- )  # BYTE PTR 0 [RAX] SUB  DROP, ;  alias _#c−!
+( Subtracts _w from word at address a. )
+: _#w-! ( a _w -- )  # WORD PTR 0 [RAX] SUB  DROP, ;  alias _#w−!
+( Subtracts _d from double-word at address a. )
+: _#d-! ( a _d -- )  # DWORD PTR 0 [RAX] SUB  DROP, ;  alias _#d−!
+( Subtracts _q from quad-word at address a. )
+: _#q-! ( a _q -- )  # QWORD PTR 0 [RAX] SUB  DROP, ;  alias _#q−!  alias _#-!  alias _#−!
+
+( Subtracts _c from byte at address a and returns the new value at a. )
+: _#c−!@ ( a _c -- c )  # BYTE PTR 0 [RAX] SUB  BYTE PTR 0 [RAX] RAX MOVZX ;  alias _#c-!@
+( Subtracts _w from word at address a and returns the new value at a. )
+: _#w−!@ ( a _w -- w )  # WORD PTR 0 [RAX] SUB  WORD PTR 0 [RAX] RAX MOVZX ;  alias _#w-!@
+( Subtracts _d from double-word at address a and returns the new value at a. )
+: _#d−!@ ( a _d -- d )  # DWORD PTR 0 [RAX] SUB  DWORD PTR 0 [RAX] RAX MOV ;  alias _#d-!@
+( Subtracts _w from quad-word at address a and returns the new value at a. )
+: _#q−!@ ( a _q -- q )  # QWORD PTR 0 [RAX] SUB  0 [RAX] RAX MOV ;  alias _#−!@  alias _#q-!@
+  alias _#-!@
 
 === Memory Logicals ===
 
@@ -198,10 +223,20 @@ vocabulary Clauses
 
 === String Clauses ===
 
+( Formats string template literal _$ fitted with # arguments ... )
+: _$| ( ... # _$ -- ShortString:s )  compileString  "ShortString" findTargetVocabulary unless
+  1 "Target vocabulary «%s» not found: please add it to the imports!"|abort  then
+  pushVocabulary createObject  "formatShortString" findTargetWord unless
+  1 "Target word «%s» not found!"|abort  then  compileTarget ;
 /*
-( Prints string template a$ fitted with u arguments ... )
-: _$|. ( ... u a$ -- )  $| $. ;
+( Prints string template literal _$ fitted with # arguments ... )
+: _$|. ( ... # _$ -- )  $| $. ;
 */
+
+=== Debugging Clauses ===
+
+( Prints the parameter stack layout with label _n. )
+: _#.s ( _n -- )  1 ADP+  RAX PUSH  1 ADP-  # RAX MOV  "#.s" getTargetWord compileTarget ;
 
 === Conditional Clauses ===
 
@@ -320,6 +355,7 @@ vocabulary Clauses
 ( Tests if u is not above _u and starts a unlikely conditional. )
 : _#u≤?ifever ( u _u -- )  # RAX CMP  U> UNLESSEVER ;  alias _#u>?unlessever
 
+--- Value and Bit Testing ---
 
 : _#bit@if ( a _# -- )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX POP  CY IF ;
 : _#bit@unless ( a _# -- )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX POP  CY UNLESS ;

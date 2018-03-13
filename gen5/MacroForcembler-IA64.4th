@@ -43,7 +43,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 ( Inserts the ENTER code. )
 : ENTER, ( -- )  CELL [RBP] RBP LEA  -CELL [RBP] POP  ENTER+  nolink ;
 ( Inserts the EXIT code. )
-: EXIT, ( -- )  "(next)" getTargetWord &# JMP  EXIT+  nolink ;
+: EXIT, ( -- )  "(next)" getTargetWord word>code &# JMP  EXIT+  nolink ;
 ( Inserts the alternative EXIT code. )
 : EXIT2, ( -- )  -CELL [RBP] PUSH  -CELL [RBP] RBP LEA  RET  EXIT2+  nolink ;
 ( Inserts the ENTER_FIELD code. )
@@ -295,6 +295,11 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : FMIN2, ( F: f1 f2 -- f1|f2 )  ST(1) FCOMI  U< IF  ST(1) FSTP  ELSE  FDROP,  THEN  nolink ;
 : FMAX2, ( F: f1 f2 -- f1|f2 )  ST(1) FCOMI  U< UNLESS  ST(1) FSTP  ELSE  FDROP,  THEN  nolink ;
 
+--- Miscellaneous ---
+
+: TIMESPLUS, ( n₁ n₂ n₃ -- n₁+n₂×n₃ )  RDX POP  RDX IMUL  RDX POP  RDX RAX ADD ;
+: UTIMESPLUS, ( n₁ n₂ n₃ -- n₁+n₂×n₃ )  RDX POP  RDX MUL  RDX POP  RDX RAX ADD ;
+
 --- Floating Point Comparisons ---
 
 : FISZERO, ( -- f=0.0 |F: f -- )  SAVE,  FTST  AX FSTSW  RDROP,
@@ -481,13 +486,22 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 === Storage Arithmetics ===
 
 ( Adds c to byte at address a. )
-: CADD, ( c a -- )  RDX POP  BL 0 [RAX] MOV  DROP, ;
+: CADD, ( c a -- )  RDX POP  BL 0 [RAX] ADD  DROP, ;
 ( Adds w to word at address a. )
-: WADD, ( w a -- )  RDX POP  BX 0 [RAX] MOV  DROP, ;
+: WADD, ( w a -- )  RDX POP  BX 0 [RAX] ADD  DROP, ;
 ( Adds d to double-word at address a. )
-: DADD, ( w a -- )  RDX POP  EBX 0 [RAX] MOV  DROP, ;
+: DADD, ( w a -- )  RDX POP  EBX 0 [RAX] ADD  DROP, ;
 ( Adds q to quad-word at address a. )
-: QADD, ( q a -- )  QWORD PTR 0 [RAX] POP  DROP, ;
+: QADD, ( q a -- )  RDX POP  RDX 0 [RAX] ADD  DROP, ;
+
+( Subtracts c from byte at address a. )
+: CSUB, ( c a -- )  RDX POP  BL 0 [RAX] SUB  DROP, ;
+( Subtracts w from word at address a. )
+: WSUB, ( w a -- )  RDX POP  BX 0 [RAX] SUB  DROP, ;
+( Subtracts d from double-word at address a. )
+: DSUB, ( w a -- )  RDX POP  EBX 0 [RAX] SUB  DROP, ;
+( Subtracts q from quad-word at address a. )
+: QSUB, ( q a -- )  RDX POP  RDX 0 [RAX] SUB  DROP, ;
 
 === Assertions ===
 
@@ -534,6 +548,9 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 
 ( Inserts code to address a field within an object instance. )
 : DOFIELD, ( -- a )  SAVE,  targetVoc@ class# [RAX] RAX LEA  nolink ;
+( Inserts code to get the field offset. )
+: FIELDOFFSET, ( -- # )
+  SAVE,  targetVoc@ class# ?dup if  # RAX MOV  else  RAX RAX XOR  then nolink ;
 ( Inserts code to fetch the contents of a signed byte field within an object instance. )
 : FETCHBFIELD, ( -- x )  BYTE PTR targetVoc@ class# [RAX] RAX MOVSX  nolink ;
 ( Inserts code to fetch the contents of an unsigned byte field within an object instance. )
@@ -594,15 +611,48 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 === Linux System Calls ===
 
 ( Inserts a Linux system call with one argument, x₁, and result x₀. )
-: LINUX-CALL-1, ( x₁ # -- x₀ )  RDI 0 [RSP] XCHG  SYSCALL  RDI POP ;
+: LINUX-CALL-1, ( x₁ # -- x₀ )  RDI 0 [RSP] XCHG  SYSCALL  RDI POP  nolink ;
 ( Inserts a Linux system call with two argument, x₁ and x₂, and result x₀. )
+: LINUX-CALL-2, ( x₁ x₂ x₃ # -- x₀ )  RDI CELL [RSP] XCHG  RSI 0 [RSP] XCHG  SYSCALL
+  RSI POP  RDI POP  nolink ;
+( Inserts a Linux system call with three argument, x₁ and x₂, and result x₀. )
 : LINUX-CALL-3, ( x₁ x₂ x₃ # -- x₀ )  RDI 2 CELLS [RSP] XCHG  RSI CELL [RSP] XCHG  RDX 0 [RSP] XCHG
-  SYSCALL  RDX POP  RSI POP  RDI POP ;
+  SYSCALL  RDX POP  RSI POP  RDI POP  nolink ;
 
 ( Transforms result x into error code #e and false, if negative, otherwise into result x and true. )
-: RESULT ( x -- x t | #e f )  RAX RAX TEST  0< IF  RAX NEG  STC  THEN  RAX PUSH  CMC  RAX RAX SBB ;
+: RESULT, ( x -- x t | #e f )
+  RAX RAX TEST  0< IF  RAX NEG  STC  THEN  RAX PUSH  CMC  RAX RAX SBB  nolink ;
 ( Transforms outcome x into error code #e and false, if negative, otherwise just returns true. )
-: ERROR ( x -- t | #e f )  RAX RAX TEST  0< IF  RAX NEG  RAX PUSH  STC  THEN  CMC  RAX RAX SBB ;
+: ERROR, ( x -- t | #e f )
+  RAX RAX TEST  0< IF  RAX NEG  RAX PUSH  STC  THEN  CMC  RAX RAX SBB  nolink ;
+
+=== Block Operations ===
+
+( Fills byte buffer of length # at address a with c. )
+: CFILL, ( a # c -- )  RCX POP  0 [RSP] RDI XCHG  REP BYTE STOS  nolink ;
+( Fills word buffer of length # at address a with w. )
+: WFILL, ( a # w -- )  RCX POP  0 [RSP] RDI XCHG  REP WORD STOS  nolink ;
+( Fills double-word buffer of length # at address a with d. )
+: DFILL, ( a # d -- )  RCX POP  0 [RSP] RDI XCHG  REP DWORD STOS  nolink ;
+( Fills quad-word buffer of length # at address a with q. )
+: QFILL, ( a # q -- )  RCX POP  0 [RSP] RDI XCHG  REP QWORD STOS  nolink ;
+
+=== Short String Operations ===
+
+( Returns address a and ength # of short string a$. )
+: COUNT, ( a$ -- a # )  BYTE PTR 1 [RAX] RDX MOV  RDX PUSH  RAX INC  nolink ;
+( Appends unsigned byte c to counted string in buffer at a$. )
+: CAPPEND$, ( c a$ -- )
+  BYTE PTR 0 [RAX] INC  BYTE PTR 0 [RAX] RCX MOVZX  RDX POP  DL 1 [RAX] [RCX] MOV  nolink ;
+
+=== UTF8 ===
+
+( Converts unicode character uc to UTF8 representation utf8 on the stack. )
+: TOUTF8, ( uc -- utf8 )  128 u# RAX CMP  0< UNLESS
+  RDX RDX XOR  %1000000 u# RCX MOV
+  BEGIN  1 # CH SHR  8 # RDX SHL  AL DL MOV  %111111 u# DL AND  %10000000 u# DL OR  6 # RAX SHR
+  RCX RAX CMP  U< UNTIL  CL CH MOV  CL NOT  CH DEC  CH CL XOR  CL AL OR   8 # RDX SHL  AL DL MOV
+  op#@ . RDX RAX MOV  op#@ . THEN  op#@ . nolink  op#@ . ;
 
 === Blocks and Loops ===
 
@@ -651,9 +701,9 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : ISABOVE, ( u1 u2 -- u1>u2 )  RDX POP  RAX RDX CMP  AL U> ?SET  AL NEG  AL RAX MOVSX  nolink ;
 : ISNOTABOVE, ( u1 u2 -- u1≤u2 )  RDX POP  RAX RDX CMP  AL U≤ ?SET  AL NEG  AL RAX MOVSX  nolink ;
 : ISWITHIN, ( n1 n2 n3 -- n2≤n1<n3 )  RDX POP  RCX POP  RAX RSI MOV  RAX RAX XOR
-  RCX RDX CMP  ≤ IF  RCX RSI CMP  > IF  RAX DEC  THEN  THEN  nolink ;
+  RDX RSI CMP  ≤ IF  RCX RSI CMP  > IF  RAX DEC  THEN  THEN  nolink ;
 : ISBETWEEN, ( u1 u2 u3 -- u2≤u1<u3 )  RDX POP  RCX POP  RAX RSI MOV  RAX RAX XOR
-  RCX RDX CMP  U≤ IF  RCX RSI CMP  U> IF  RAX DEC  THEN  THEN  nolink ;
+  RDX RSI CMP  U≤ IF  RCX RSI CMP  U> IF  RAX DEC  THEN  THEN  nolink ;
 
 : DUPIF, ( x -- [x] x )  RAX RAX TEST  0= UNLESS  RAX PUSH  nolink ;
 : DUPUNLESS, ( x -- [x] x )  RAX RAX TEST  0= UNLESS  RAX PUSH  ELSE  nolink ;
@@ -680,23 +730,23 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : IFABOVE, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  RAX POP  U> IF  nolink ;
 : IFNOTABOVE, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  RAX POP  U> UNLESS  nolink ;
 
-: DUPIFZERO, ( x -- )  RAX RAX TEST  0= IF  nolink ;
-: DUPIFNOTZERO, ( x -- )  RAX RAX TEST  0= UNLESS  nolink ;
-: DUPIFNEGATIVE, ( x -- )  RAX RAX TEST  0< IF  nolink ;
-: DUPIFNOTNEGATIVE, ( x -- )  RAX RAX TEST  0< UNLESS  nolink ;
-: DUPIFPOSITIVE, ( x -- )  RAX RAX TEST  0> IF  nolink ;
-: DUPIFNOTPOSITIVE, ( x -- )  RAX RAX TEST  0> UNLESS  nolink ;
+: DUPIFZERO, ( x -- x )  RAX RAX TEST  0= IF  nolink ;
+: DUPIFNOTZERO, ( x -- x )  RAX RAX TEST  0= UNLESS  nolink ;
+: DUPIFNEGATIVE, ( x -- x )  RAX RAX TEST  0< IF  nolink ;
+: DUPIFNOTNEGATIVE, ( x -- x )  RAX RAX TEST  0< UNLESS  nolink ;
+: DUPIFPOSITIVE, ( x -- x )  RAX RAX TEST  0> IF  nolink ;
+: DUPIFNOTPOSITIVE, ( x -- x )  RAX RAX TEST  0> UNLESS  nolink ;
 
-: DUPIFEQUAL, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  = IF  nolink ;
-: DUPIFNOTEQUAL, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  = UNLESS  nolink ;
-: DUPIFLESS, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  < IF  nolink ;
-: DUPIFNOTLESS, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  < UNLESS  nolink ;
-: DUPIFGREATER, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  > IF  nolink ;
-: DUPIFNOTGREATER, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  > UNLESS  nolink ;
-: DUPIFBELOW, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  U< IF  nolink ;
-: DUPIFNOTBELOW, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  U< UNLESS  nolink ;
-: DUPIFABOVE, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  U> IF  nolink ;
-: DUPIFNOTABOVE, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  U> UNLESS  nolink ;
+: DUPIFEQUAL, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  = IF  nolink ;
+: DUPIFNOTEQUAL, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  = UNLESS  nolink ;
+: DUPIFLESS, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  < IF  nolink ;
+: DUPIFNOTLESS, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  < UNLESS  nolink ;
+: DUPIFGREATER, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  > IF  nolink ;
+: DUPIFNOTGREATER, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  > UNLESS  nolink ;
+: DUPIFBELOW, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  U< IF  nolink ;
+: DUPIFNOTBELOW, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  U< UNLESS  nolink ;
+: DUPIFABOVE, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  U> IF  nolink ;
+: DUPIFNOTABOVE, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  U> UNLESS  nolink ;
 
 : WHILEZERO, ( x -- )  RAX RAX TEST  RAX POP  0= WHILE  nolink ;
 : WHILENOTZERO, ( x -- )  RAX RAX TEST  RAX POP  0= UNLESS  nolink ;
@@ -715,6 +765,26 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : WHILENOTBELOW, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  RAX POP  U< UNLESS  nolink ;
 : WHILEABOVE, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  RAX POP  U> WHILE  nolink ;
 : WHILENOTABOVE, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  RAX POP  U> UNLESS  nolink ;
+
+: DUPWHILEZERO, ( x -- )  RAX RAX TEST  0= WHILE  nolink ;
+: DUPWHILENOTZERO, ( x -- )  RAX RAX TEST  0= UNLESS  nolink ;
+: DUPWHILENEGATIVE, ( x -- )  RAX RAX TEST  0< WHILE  nolink ;
+: DUPWHILENOTNEGATIVE, ( x -- )  RAX RAX TEST  RAX POP 0< UNLESS  nolink ;
+: DUPWHILEPOSITIVE, ( x -- )  RAX RAX TEST  0> WHILE  nolink ;
+: DUPWHILENOTPOSITIVE, ( x -- )  RAX RAX TEST  0> UNLESS  nolink ;
+
+: DUPWHILEEQUAL, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  = WHILE  nolink ;
+: DUPWHILENOTEQUAL, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  = UNLESS  nolink ;
+: DUPWHILELESS, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  < WHILE  nolink ;
+: DUPWHILENOTLESS, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  < UNLESS  nolink ;
+: DUPWHILEGREATER, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  > WHILE  nolink ;
+: DUPWHILENOTGREATER, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  > UNLESS  nolink ;
+: DUPWHILEBELOW, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  U< WHILE  nolink ;
+: DUPWHILENOTBELOW, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  U< UNLESS  nolink ;
+: DUPWHILEABOVE, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  U> WHILE  nolink ;
+: DUPWHILENOTABOVE, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  U> UNLESS  nolink ;
+
+: DUPUNTILZERO, ( x -- x )  RAX RAX TEST  0= UNTIL  nolink ;
 
 --- Unlikely ---
 

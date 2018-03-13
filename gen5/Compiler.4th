@@ -92,4 +92,13 @@ variable CODEMODEL                ( Target code model: 0 = inline, 1 = direct, 2
   2=?if  drop punchIndirect exit  then
   1 "Unknown code model: %d"|! ;
 
+=== Object Management ===
+
+( Inserts code to create a new object. )
+: createObject ( ^voc -- Object:o )
+  PushedVoc @ -1=?if  "Missing class name for ‹new›!"! abort  then
+  #vocabulary@ dup §TEXT @#segment@ TEXT.VOCFLAGS + VOC%CLASS bit@ unless
+    @vocabulary$ 1 "Vocabulary «%s» is not a class!"|! abort  then
+  PushedVoc -1!  dup class# ALLOC,  findConstructor if  compileTarget  then ;
+
 vocabulary;

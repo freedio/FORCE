@@ -240,7 +240,7 @@ vocabulary Forcembler-IA64
 : [RIP] ( disp -- )  T.ARCH i64 = unless  RIP_64_ONLY$ error  then
   5 #DIRECT 0 i64 makeDirect  #DWORD dispsize! op#1+! ;
 : # ( n -- )  nsize makeImmediate op#1+! ;
-: u# ( u -- )  usize makeUmmediate op#1+! ;
+: u# ( u -- )  usize  makeUmmediate op#1+! ;
 : &# ( &r -- )  dup reloc! reloc+ &here &− DWORD makeImmediate op#1+! ;
 
 : PTR ( # -- )  width>size sizex! ;

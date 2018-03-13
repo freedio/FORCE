@@ -11,6 +11,8 @@ import force/exception/Exception
 import force/exception/ExceptionHandler
 ( import force/logging/Log )
 
+import force/debug/DebugIO
+
 vocabulary Exceptions
 
 === Exception Handler Stack ===

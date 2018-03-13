@@ -32,10 +32,7 @@ vocabulary CompilerWords
 ( Pushes the current object instance onto the parameter stack. )
 : this ( -- @o )  THIS, ;  alias me  alias my
 ( Creates and initializes new instance o of class with vocabulary ^voc. )
-: new ( ^voc -- Object:o )  PushedVoc @ -1=?if  "Missing class name for ‹new›!"! abort  then
-  #vocabulary@ dup §TEXT @#segment@ TEXT.VOCFLAGS + VOC%CLASS bit@ unless
-    @vocabulary$ 1 "Vocabulary «%s» is not a class!"|! abort  then
-  PushedVoc -1!  dup class# ALLOC,  findConstructor if  compileTarget  then ;
+: new ( ^voc -- Object:o )  createObject ;
 ( Invokes the superclass constructor, if sny. )
 : superconstruct ( -- )
   §TEXT #segment@ TEXT.SUPER + @ ?dupif  findConstructor if  compileTarget  then  then
@@ -191,6 +188,42 @@ vocabulary CompilerWords
 : u>?if ( u₁ u₂ -- )  DUPIFABOVE, ;  alias u≤?unless
 ( Tests if u₁ is not above u₂ and starts a likely conditional. )
 : u≤?if ( u₁ u₂ -- )  DUPIFNOTABOVE, ;  alias u>?unless
+
+( Loops while x is zero. )
+: 0=?while ( x -- )  DUPWHILEZERO, ;
+( Loops while x is not zero. )
+: 0≠?while ( x -- )  DUPWHILENOTZERO, ;
+( Loops while x is negative. )
+: 0<?while ( x -- )  DUPWHILENEGATIVE, ;
+( Loops while x is not negative. )
+: 0≥?while ( x -- )  DUPWHILENEGATIVE, ;
+( Loops while x is positive. )
+: 0>?while ( x -- )  DUPWHILEPOSITIVE, ;
+( Loops while x is not positive. )
+: 0≤?while ( x -- )  DUPWHILENOTPOSITIVE, ;
+
+( Loops while x₁ is equal to x₂. )
+: =?while ( x₁ x₂ -- )  DUPWHILEEQUAL, ;
+( Loops while x₁ is not equal to x₂. )
+: ≠?while ( x₁ x₂ -- )  DUPWHILENOTEQUAL, ;
+( Loops while n₁ is less than n₂. )
+: <?while ( n₁ n₂ -- )  DUPWHILELESS, ;
+( Loops while n₁ is not less than n₂. )
+: ≥?while ( n₁ n₂ -- )  DUPWHILELESS, ;
+( Loops while n₁ is greater than n₂. )
+: >?while ( n₁ n₂ -- )  DUPWHILEGREATER, ;
+( Loops while n₁ is not greater than n₂. )
+: ≤?while ( n₁ n₂ -- )  DUPWHILENOTGREATER, ;
+( Loops while u₁ is below u₂. )
+: u<?while ( u₁ u₂ -- )  DUPWHILEBELOW, ;
+( Loops while u₁ is not below u₂. )
+: u≥?while ( u₁ u₂ -- )  DUPWHILENOTBELOW, ;
+( Loops while u₁ is above u₂. )
+: u>?while ( u₁ u₂ -- )  DUPWHILEABOVE, ;
+( Loops while u₁ is not above u₂. )
+: u≤?while ( u₁ u₂ -- )  DUPWHILENOTABOVE, ;
+
+: 0=?until ( x -- x )  DUPUNTILZERO, ;
 
 --- Unlikely ---
 

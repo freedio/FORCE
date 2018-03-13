@@ -2,16 +2,15 @@ package force/object/
 
 import force/object/Object
 import force/exception/TypeCastException
-import force/memory/Memory
 
 Object class Class
 
 public section --- API
 
- cell variable SuperClass
-dword variable Module#
-dword variable Instance#
- word variable #Words
+  cell variable SuperClass
+udword variable Module#
+udword variable Instance#
+  word variable #Words
 
 ( Checks if object instance @o is an instance of type @T. )
 : instance? ( @o @T -- ? )
