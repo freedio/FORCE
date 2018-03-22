@@ -11,7 +11,7 @@ import linux/Linux
 
 vocabulary Memory
 
-/* All ranges "x up to y" include x and exclude y. */
+/* All ranges "x up to y" include x and exclude y as usually. */
 
 /*
  * There are 3 types of Memory Pages:
@@ -19,7 +19,7 @@ vocabulary Memory
  * • "Large Pages" hold mixed size entries of size 512 up to 4080.
  * • "Huge Pages" hold entries of size 4080 and bigger (limited only by virtual memory size).
  *
- * All pages start with the general header and then add the additional header for there page style.
+ * All pages start with the general header and then add the additional header for their page style.
  * The first entry immediately follows the header.
  *
  * General page header (10 bytes):
@@ -59,7 +59,7 @@ vocabulary Memory
 
 /*
  * The page array is a memory page containing a list of page numbers for entries of the size equal
- * to the page index -- except for page 0, which is for large entries, and page 511, which is for
+ * to the page index --- except for page 0, which is for large entries, and page 511, which is for
  * huge entries.  So, the fourth page number is for entries of size 4, the 100th page number for
  * entries of size 100.
  */
@@ -132,7 +132,7 @@ public static : allocatePage0 ( -- a )  allocatePage  dup Page# cellu/ 0 fill ;
 : @freeSmallPage ( # -- a )  >r PageDirectory@ r@ 4u* + d@ >page
   begin 0=?while  dup SmallPage#Free@ 0≠if  exit  then  Successor@  repeat  @newSmallPage ;
 ( Returns address a of a large page for with enough free space to accommodate an entry of size #. )
-: @freeLargePage ( # -- a )  >r PageDirectory@ ;
+: @freeLargePage ( # -- a )  >r PageDirectory@ ... ;
 ( Returns address a of a huge page for with enough free space to accommodate an entry of size #. )
 : @freeHugePage ( # -- a )  ... ;
 ( Returns address a of a page for entries of size # with enough free space to accommodate an entry
@@ -142,6 +142,10 @@ public static : allocatePage0 ( -- a )  allocatePage  dup Page# cellu/ 0 fill ;
 
 ( Allocates a small entry (1 up to 512 bytes). )
 : allocateSmall ( # -- a )  @freeSmallPage Entry ;
+( Allocates a large entry (512 up to 4080 bytes). )
+: allocateLarge ( # -- a )  ... ;
+( Allocates a huge entry (bigger than 4080 bytes). )
+: allocateHuge ( # -- a )  ... ;
 
 ( Allocates a memory chunk of size # and returns its address a. )
 : _allocate ( # -- a )  1<?if  1 "Invalid allocation size: %d"| InvalidArgumentException raise  then
@@ -168,6 +172,12 @@ public static section --- API
 
 --- Object Allocation ---
 
+( Allocates a small object of size # and returns its address a. )
+: allocSmallObj ( # -- a )  ... ;
+( Allocates a large object of size # and returns its address a. )
+: allocLargeObj ( # -- a )  ... ;
+( Allocates a huge object of size # and returns its address a. )
+: allocHugeObj ( # -- a )  ... ;
 ( Allocates an object instance of total size #, clears it to all 0, and returns its address a. )
 : allocObj ( # -- a )  1<?if  1 "Invalid allocation size: %d"| InvalidArgumentException raise  then
   dup 512<?if  allocSmallObj  else  4080<?if  allocLargeObj  else  allocHugeObj  then  then

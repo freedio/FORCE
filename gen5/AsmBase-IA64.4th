@@ -667,13 +667,13 @@ bytevar OP#
 : !no64 ( -- )  opsize@ #DWORD > if  INVALID_OPERAND_SIZE$ error  then ;
 : r/mreg! ( r/mop regop -- )  reg! !stdr/m modr/m! ;
 : range  ( n # -- ? )
-       0 =?if  drop 0=  exit  then
+        0=?if  drop 0=  exit  then
    #BYTE =?if  drop -128 256 within  exit  then
    #WORD =?if  drop -32768 65536 within  exit  then
   #DWORD =?if  drop -2147483648 4294967296 within  exit  then
-  #QWORD =?if  drop true  then
+  #QWORD =?if  2drop true  exit  then
   drop INVALID_OPERAND_SIZE$ error ;
-: fits? ( n # -- n # ? )  2dup range 4711.s ;
+: fits? ( n # -- n # ? )  2dup range ;
 : !fits ( n # -- n # )  fits? unless  IMMEDIATE_TOO_BIG$ error  then ;
 : !size= ( op1 op2 -- op1 op2 )  over .size over .size - if  OPERAND_SIZE_MISMATCH$ error  then ;
 : reladdr ( size offset -- )

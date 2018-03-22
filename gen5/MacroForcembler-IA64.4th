@@ -240,7 +240,19 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 ( Calculates the quotient and rest of the integer division u₁ through u₂. )
 : UMODTHROUGH, ( u₁ u₂ -- u₁%u₂ u₁÷u₂ )  RCX POP  RDX RDX XOR  RCX DIV  RDX PUSH  nolink ;
 ( Calculates the quotient and rest of the integer division u₂ through u₁. )
-: URMODTHROUGH, ( u₁ u₂ -- u₂%u₁ u₂÷u₁ )  RAX RCX MOV  RAX POP  RDX RDX XOR  RCX IDIV  RDX PUSH  nolink ;
+: URMODTHROUGH, ( u₁ u₂ -- u₂%u₁ u₂÷u₁ )
+  RAX RCX MOV  RAX POP  RDX RDX XOR  RCX IDIV  RDX PUSH  nolink ;
+( Calculates the quotient and rest of the integer division n₁ through n₂. )
+: THROUGHMOD, ( n₁ n₂ -- n₁÷n₂ n₁%n₂ )  RCX POP  CQO  RCX IDIV  RAX PUSH  RDX RAX MOV  nolink ;
+( Calculates the quotient and rest of the integer division n₂ through n₁. )
+: RTHROUGHMOD, ( n₁ n₂ -- n₂÷n₁ n₂%n₁ )
+  RAX RCX MOV  RAX POP  CQO  RCX IDIV  RAX PUSH  RDX RAX MOV  nolink ;
+( Calculates the quotient and rest of the integer division u₁ through u₂. )
+: UTHROUGHMOD, ( u₁ u₂ -- u₁÷u₂ u₁%u₂ )
+  RCX POP  RDX RDX XOR  RCX DIV  RAX PUSH  RDX RAX MOV  nolink ;
+( Calculates the quotient and rest of the integer division u₂ through u₁. )
+: URTHROUGHMOD, ( u₁ u₂ -- u₂÷u₁ u₂%u₁ )
+  RAX RCX MOV  RAX POP  RDX RDX XOR  RCX IDIV  RAX PUSH  RDX RAX MOV  nolink ;
 
 ( Increments x by 1. )
 : INC, ( x -- x+1 )  RAX INC  nolink ;
@@ -465,17 +477,29 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : STOREOINC, ( a o -- a+16 )
   RCX POP  RDX POP  RAX 0 [RDX] MOV  RCX CELL [RDX] MOV  16 [RDX] RAX LEA  nolink ;
 
-( Sets byte at address a to the LSB8 of c after pre-decrements. )
-: DECCSTORE, ( a c -- a−1 )  RDX POP  AL -1 [RDX] MOV  -1 [RDX] RAX LEA  nolink ;
-( Sets word at address a to the LSB16 of w after pre-decrements. )
-: DECWSTORE, ( a w -- a−2 )  RDX POP  AX -2 [RDX] MOV  -2 [RDX] RAX LEA  nolink ;
-( Sets double-word at address a to the LSB32 of d after pre-decrements. )
-: DECDSTORE, ( a d -- a−4 )  RDX POP  EAX -4 [RDX] MOV  -4 [RDX] RAX LEA  nolink ;
-( Sets quad-word at address a to the LSB32 of q after pre-decrements. )
-: DECQSTORE, ( a q -- a−8 )  RDX POP  RAX -8 [RDX] MOV  -8 [RDX] RAX LEA  nolink ;
-( Sets oct-word at address a to the LSB64 of o after pre-decrements. )
-: DECOSTORE, ( a o -- a−16 )
-  RCX POP  RDX POP  RAX -16 [RDX] MOV  RCX -8 [RDX] MOV  -16 [RDX] RAX LEA  nolink ;
+( Sets byte at address a−1 to the LSB8 of c after pre-decrements. )
+: DECCSTORE, ( c a -- a−1 )  RDX POP  RAX DEC  DL 0 [RAX] MOV  nolink ;
+( Sets word at address a−2 to the LSB16 of w after pre-decrements. )
+: DECWSTORE, ( w a -- a−2 )  RDX POP  2 # RAX SUB  DX 0 [RAX] MOV  nolink ;
+( Sets double-word at address a−4 to the LSB32 of d after pre-decrements. )
+: DECDSTORE, ( d a -- a−4 )  RDX POP  4 # RAX SUB  EDX 0 [RAX] MOV  nolink ;
+( Sets quad-word at address a−8 to the LSB32 of q after pre-decrements. )
+: DECQSTORE, ( q a -- a−8 )  8 # RAX SUB  0 [RAX] POP  nolink ;
+( Sets oct-word at address a−16 to the LSB64 of o after pre-decrements. )
+: DECOSTORE, ( o a -- a−16 )
+  RCX POP  RDX POP  16 # RAX SUB  RDX 8 [RAX] MOV  RCX 0 [RAX] MOV  nolink ;
+
+( Sets byte at address a−1 to the LSB8 of c after pre-decrements. )
+: DECSTOREC, ( a c -- a−1 )  RDX POP  AL -1 [RDX] MOV  -1 [RDX] RAX LEA  nolink ;
+( Sets word at address a−2 to the LSB16 of w after pre-decrements. )
+: DECSTOREW, ( a w -- a−2 )  RDX POP  AX -2 [RDX] MOV  -2 [RDX] RAX LEA  nolink ;
+( Sets double-word at address a−4 to the LSB32 of d after pre-decrements. )
+: DECSTORED, ( a d -- a−4 )  RDX POP  EAX -4 [RDX] MOV  -4 [RDX] RAX LEA  nolink ;
+( Sets quad-word at address a−8 to the LSB32 of q after pre-decrements. )
+: DECSTOREQ, ( a q -- a−8 )  RDX POP  RAX -8 [RDX] MOV  -8 [RDX] RAX LEA  nolink ;
+( Sets oct-word at address a−16 to the LSB64 of o after pre-decrements. )
+: DECSTOREO, ( a o -- a−16 )
+  RCX POP  RDX POP  RCX -16 [RDX] MOV  RAX -8 [RDX] MOV  -16 [RDX] RAX LEA  nolink ;
 
 ( Loads float at address a onto the float stack. )
 : FFETCH, ( a -- :F: -- r )  QWORD PTR 0 [RAX] FLD  DROP, ;
@@ -629,18 +653,18 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 === Block Operations ===
 
 ( Fills byte buffer of length # at address a with c. )
-: CFILL, ( a # c -- )  RCX POP  0 [RSP] RDI XCHG  REP BYTE STOS  nolink ;
+: CFILL, ( a # c -- )  RCX POP  0 [RSP] RDI XCHG  REP BYTE PTR STOS  nolink ;
 ( Fills word buffer of length # at address a with w. )
-: WFILL, ( a # w -- )  RCX POP  0 [RSP] RDI XCHG  REP WORD STOS  nolink ;
+: WFILL, ( a # w -- )  RCX POP  0 [RSP] RDI XCHG  REP WORD PTR STOS  nolink ;
 ( Fills double-word buffer of length # at address a with d. )
-: DFILL, ( a # d -- )  RCX POP  0 [RSP] RDI XCHG  REP DWORD STOS  nolink ;
+: DFILL, ( a # d -- )  RCX POP  0 [RSP] RDI XCHG  REP DWORD PTR STOS  nolink ;
 ( Fills quad-word buffer of length # at address a with q. )
-: QFILL, ( a # q -- )  RCX POP  0 [RSP] RDI XCHG  REP QWORD STOS  nolink ;
+: QFILL, ( a # q -- )  RCX POP  0 [RSP] RDI XCHG  REP QWORD PTR STOS  nolink ;
 
 === Short String Operations ===
 
 ( Returns address a and ength # of short string a$. )
-: COUNT, ( a$ -- a # )  BYTE PTR 1 [RAX] RDX MOV  RDX PUSH  RAX INC  nolink ;
+: COUNT, ( a$ -- a # )  BYTE PTR 1 [RAX] RDX MOVZX  RDX PUSH  RAX INC  nolink ;
 ( Appends unsigned byte c to counted string in buffer at a$. )
 : CAPPEND$, ( c a$ -- )
   BYTE PTR 0 [RAX] INC  BYTE PTR 0 [RAX] RCX MOVZX  RDX POP  DL 1 [RAX] [RCX] MOV  nolink ;
@@ -670,6 +694,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : DODOWN,  RAX RCX MOV  RDX POP  RAX POP  RDX RCX CMP  > IF
   16 [RBP] RBP LEA  RCX -16 [RBP] MOV  RDX -8 [RBP] MOV  BEGIN  nolink ;
 : LOOP,  QWORD PTR -CELL [RBP] INC  LOOPPARA,  RCX RDX CMP  = UNTIL  2RDROP,  THEN  nolink ;
+: LOOPDOWN,  QWORD PTR -CELL [RBP] DEC  LOOPPARA,  RCX RDX CMP  = UNTIL  2RDROP,  THEN  nolink ;
 
 === Conditional Expressions ===
 
@@ -784,6 +809,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : DUPWHILEABOVE, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  U> WHILE  nolink ;
 : DUPWHILENOTABOVE, ( x₁ x₂ -- x₁ )  RDX POP  RAX RDX CMP  U> UNLESS  nolink ;
 
+: UNTILZERO, ( x -- )  RAX RAX TEST  RAX POP  0= UNTIL  nolink ;
 : DUPUNTILZERO, ( x -- x )  RAX RAX TEST  0= UNTIL  nolink ;
 
 --- Unlikely ---

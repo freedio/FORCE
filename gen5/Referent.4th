@@ -66,5 +66,7 @@ vocabulary Referent
 
 ( Splits extended referent &rx into regular referent &r and extra field xtra. )
 : splitReferent ( &rx -- &r xtra )  REFERENT.EXTRA bits 1+ u/mod ;
+( Checks if the referent refers to a deferred word. )
+: deferred? ( &r -- &r ? )  dup referentSegment 10= ;
 
 vocabulary;

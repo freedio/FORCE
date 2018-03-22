@@ -13,7 +13,9 @@ vocabulary Clauses
 
 === Stack Operations ===
 
-: _#pick ( ... # -- ... x )  1 ADP+  RAX PUSH  1 ADP-  CELLS [RSP] RAX MOV ;
+: _#pick ( ... _# -- ... x )  1 ADP+  RAX PUSH  1 ADP-  CELLS [RSP] RAX MOV ;
+: _#roll ( ... _# -- ... )  # RCX MOV  RDX RDX XOR
+  BEGIN  RCX DEC  0> WHILE  0 [RSP] [RDX] *CELL RAX XCHG  RDX INC  REPEAT  nolink ;
 
 === Stack Arithemtic Clauses ===
 
@@ -226,8 +228,9 @@ vocabulary Clauses
 ( Formats string template literal _$ fitted with # arguments ... )
 : _$| ( ... # _$ -- ShortString:s )  compileString  "ShortString" findTargetVocabulary unless
   1 "Target vocabulary «%s» not found: please add it to the imports!"|abort  then
-  pushVocabulary createObject  "formatShortString" findTargetWord unless
-  1 "Target word «%s» not found!"|abort  then  compileTarget ;
+  pushVocabulary createObject  "formatShortString" getTargetWord  compileTarget ;
+: _$! ( _$ -- )  compileString "!." getTargetWord  compileTarget ;
+
 /*
 ( Prints string template literal _$ fitted with # arguments ... )
 : _$|. ( ... # _$ -- )  $| $. ;

@@ -92,8 +92,9 @@ cell+ constant HEAP#              ( Size of the heap structure )
 ( Adds # to the length of heap #h. )
 : heap+! ( # #h -- )  #heap@ @heap+! ;
 ( Adds u bytes to the capacity of heap @h. )
-: _extendHeap ( @h u -- )  over @heap## +  PAGE# 1− + PAGE# u/ 2dup @heap++!
-  over @heap@ swap dup 1- swap resize 0bit+ swap @heap! ;
+: _extendHeap ( @h u -- )  cr "Extending heap.".
+  over @heap## +  PAGE# 1− + PAGE# u/ 2dup @heap++!
+  over @heap@ swap dup 1+ resize 0bit+ swap @heap! ;
 ( Extends heap #h, if necessary, to accommodate # more bytes. )
 : ?extendHeap ( # #h -- # #h )
   2dup #heap@ dup @heap# rot + swap @heap## − 0>if dup #heap@ PAGE# _extendHeap then ;

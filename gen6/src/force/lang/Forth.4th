@@ -195,7 +195,16 @@ cell+ constant ExHandler#
 ( Calculates the quotient and rest of the integer division u₁ through u₂. )
 : u%÷ ( u₁ u₂ -- u₁%u₂ u₁÷u₂ )  UMODTHROUGH, ;  alias umod/
 ( Calculates the quotient and rest of the integer division u₂ through u₁. )
-: ur% ( u₁ u₂ -- u₂%u₁ u₂÷u₁ )  URMODTHROUGH, ;  alias urmod/
+: ur%÷ ( u₁ u₂ -- u₂%u₁ u₂÷u₁ )  URMODTHROUGH, ;  alias urmod/
+( Calculates the rest and quotient of the integer division n₁ through n₂. )
+: ÷% ( n₁ n₂ -- n₁÷n₂ n₁%n₂ )  THROUGHMOD, ;  alias /mod
+( Calculates the rest and quotient of the integer division n₂ through n₁. )
+: r÷% ( n₁ n₂ -- n₂÷n₁ n₂%n₁ )  RTHROUGHMOD, ;  alias r/mod
+( Calculates the rest and quotient of the integer division u₁ through u₂. )
+: u÷% ( u₁ u₂ -- u₁÷u₂ u₁%u₂ )  UTHROUGHMOD, ;  alias u/mod
+( Calculates the rest and quotient of the integer division u₂ through u₁. )
+: ur÷% ( u₁ u₂ -- u₂÷u₁ u₂%u₁ )  URTHROUGHMOD, ;  alias ur/mod
+
 ( Returns n = n₁+n₂×n₃. )
 : *+ ( n₁ n₂ n₃ -- n )  TIMESPLUS, ;
 ( Returns u = u₁+u₂×u₃. )
@@ -219,21 +228,23 @@ cell+ constant ExHandler#
 ( Returns the absolute value of n. )
 : abs ( n -- |n| )  ABS, ;
 ( Selects the lesser of two signed numbers n1 and n2. )
-: min ( n1 n2 -- n1|n2 )  MIN2, ;
+: min ( n₁ n₂ -- n₁|n₂ )  MIN2, ;
 ( Selects the greater of two signed numbers n1 and n2. )
-: max ( n1 n2 -- n1|n2 )  MAX2, ;
+: max ( n₁ n₂ -- n₁|n₂ )  MAX2, ;
 ( Selects the lesser of two unsigned numbers u1 and u2. )
-: umin ( u1 u2 -- u1|u2 )  UMIN2, ;
+: umin ( u₁ u₂ -- u₁|u₂ )  UMIN2, ;
 ( Selects the greater of two unsigned numbers u1 and u2. )
-: umax ( u1 u2 -- u1|u2 )  UMAX2, ;
+: umax ( u₁ u₂ -- u₁|u₂ )  UMAX2, ;
 ( Selects the least of # signed numbers. )
-: nmin ( n1 ... n# # -- n )  maxcellv INT, SWAP, 0 udo  min  loop ;
+: nmin ( n₁ ... n# # -- n )  maxcellv INT, SWAP, 0 udo  min  loop ;
 ( Selects the greatest of # signed numbers. )
-: nmax ( n1 ... n# # -- n )  mincellv INT, SWAP, 0 udo  max  loop ;
+: nmax ( n₁ ... n# # -- n )  mincellv INT, SWAP, 0 udo  max  loop ;
 ( Selects the least of # unsigned numbers. )
-: numin ( u1 ... u# # -- u )  -1 SWAP, 0 udo  umin  loop ;
+: numin ( u₁ ... u# # -- u )  -1 SWAP, 0 udo  umin  loop ;
 ( Selects the greatest of # unsigned numbers. )
-: numax ( u1 ... u# # -- u )  0 SWAP, 0 udo  umax  loop ;
+: numax ( u₁ ... u# # -- u )  0 SWAP, 0 udo  umax  loop ;
+( Checks if x₁ is at least x₂ and less than x₃. )
+: within ( x₁ x₂ x₃ -- ? )  ISWITHIN, ;
 ( Returns size # in bytes of n.  Note that size of n=0 will be reported as 0, so to get at least 1,
   use "nsize 1 max" )
 : nsize ( n -- n # )  NSIZE, ;
@@ -404,25 +415,25 @@ cell+ constant ExHandler#
 : o@++ ( a -- a+16 o )  OFETCHINC, ;
 
 ( Returns signed byte b at address a after pre-decrements. )
-: --b@ ( a -- a−1 b 0 )  DECBFETCH, ;
+: --b@ ( a -- a−1 b )  DECBFETCH, ;
 ( Returns unsigned byte c at address a after pre-decrements. )
-: --c@ ( a -- a−1 c 0 )  DECCFETCH, ;
+: --c@ ( a -- a−1 c )  DECCFETCH, ;
 ( Returns signed word s at address a after pre-decrements. )
-: --s@ ( a -- a−2 s 0 )  DECSFETCH, ;
+: --s@ ( a -- a−2 s )  DECSFETCH, ;
 ( Returns unsigned word w at address a after pre-decrements. )
-: --w@ ( a -- a−2 w 0 )  DECWFETCH, ;
+: --w@ ( a -- a−2 w )  DECWFETCH, ;
 ( Returns signed double-word i at address a after pre-decrements. )
-: --i@ ( a -- a−4 i 0 )  DECIFETCH, ;
+: --i@ ( a -- a−4 i )  DECIFETCH, ;
 ( Returns unsigned double-word d at address a after pre-decrements. )
-: --d@ ( a -- a−4 d 0 )  DECDFETCH, ;
+: --d@ ( a -- a−4 d )  DECDFETCH, ;
 ( Returns signed quad-word l at address a after pre-decrements. )
-: --l@ ( a -- a−8 l 0 )  DECLFETCH, ;
+: --l@ ( a -- a−8 l )  DECLFETCH, ;
 ( Returns unsigned quad-word q at address a after pre-decrements. )
-: --q@ ( a -- a−8 q 0 )  DECQFETCH, ;  alias --@
+: --q@ ( a -- a−8 q )  DECQFETCH, ;  alias --@
 ( Returns signed oct-word h at address a after pre-decrements. )
-: --h@ ( a -- a−16 h 0 )  DECHFETCH, ;
+: --h@ ( a -- a−16 h )  DECHFETCH, ;
 ( Returns unsigned oct-word o at address a after pre-decrements. )
-: --o@ ( a -- a−16 o 0 )  DECOFETCH, ;
+: --o@ ( a -- a−16 o )  DECOFETCH, ;
 
 ( Sets byte at address a to the LSB8 of c. )
 : c! ( c a -- )  CSTORE, ;
@@ -457,16 +468,27 @@ cell+ constant ExHandler#
 ( Sets oct-word at adddress a to the LSB128 of o and post-increments. )
 : !o++ ( a o -- a+16 )  STOREOINC, ;
 
-( Sets byte at address a to the LSB8 of c after pre-decrements. )
+( Sets byte at address a-1 to the LSB8 of c after pre-decrements. )
 : --c! ( c a -- a−1 )  DECCSTORE, ;
-( Sets word at address a to the LSB16 of w after pre-decrements. )
+( Sets word at address a-2 to the LSB16 of w after pre-decrements. )
 : --w! ( w a -- a−2 )  DECWSTORE, ;
-( Sets double-word at address a to the LSB32 of d after pre-decrements. )
+( Sets double-word at address a-4 to the LSB32 of d after pre-decrements. )
 : --d! ( d a -- a−4 )  DECDSTORE, ;
-( Sets quad-word at adddress a to the LSB64 of q after pre-decrements. )
+( Sets quad-word at adddress a-8 to the LSB64 of q after pre-decrements. )
 : --q! ( q a -- a−8 )  DECQSTORE, ;  alias --!
-( Sets oct-word at adddress a to the LSB128 of o after pre-decrements. )
+( Sets oct-word at adddress a-16 to the LSB128 of o after pre-decrements. )
 : --o! ( o a -- a−16 )  DECOSTORE, ;
+
+( Sets byte at address a-1 to the LSB8 of c after pre-decrements. )
+: --!c ( a c -- a−1 )  DECSTOREC, ;
+( Sets word at address a-2 to the LSB16 of w after pre-decrements. )
+: --!w ( a w -- a−2 )  DECSTOREW, ;
+( Sets double-word at address a-4 to the LSB32 of d after pre-decrements. )
+: --!d ( a d -- a−4 )  DECSTORED, ;
+( Sets quad-word at adddress a-8 to the LSB64 of q after pre-decrements. )
+: --!q ( a q -- a−8 )  DECSTOREQ, ;
+( Sets oct-word at adddress a-16 to the LSB128 of o after pre-decrements. )
+: --!o ( a o -- a−16 )  DECSTOREO, ;
 
 ( Sets cell at address a to 0. )
 : off ( a -- )  0! ;

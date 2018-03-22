@@ -9,6 +9,7 @@ vocabulary CompilerWords
   requires" LogLevel.voc"
   requires" Vocabulary.voc"
   requires" ParserControl.voc"
+  requires" AsmBase-IA64.voc"
   requires" MacroForcembler-IA64.voc"
   requires" Compiler.voc"
 
@@ -66,8 +67,9 @@ vocabulary CompilerWords
 : repeat  REPEAT, ;
 : do  DO, ;
 : udo  UDO, ;
-: -do  DODOWN, ;
+: −do  DODOWN, ;  alias -do
 : loop  LOOP, ;
+: loop−  LOOPDOWN, ;  alias loop-
 
 === Conditional Expressions ===
 
@@ -152,6 +154,8 @@ vocabulary CompilerWords
 : u>while ( u₁ u₂ -- )  WHILEABOVE, ;
 ( Loops while u₁ is not above u₂ and starts a likely conditional. )
 : u≤while ( u₁ u₂ -- )  WHILENOTABOVE, ;
+
+: 0=until ( x -- )  UNTILZERO, ;
 
 --- Likely, preserving testee ---
 

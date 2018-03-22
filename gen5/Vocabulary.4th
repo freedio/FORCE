@@ -497,6 +497,6 @@ variable @CURRENTCODE             ( Referent to first byte of code being entered
   constructor and true, or false if none of the classes in the class hierarchy has a constructor. )
 : findConstructor ( @voc -- &w t | f )
   begin  dup @vocabulary# "construct" findLocalWord  0= while
-    drop  §TEXT @#segment@ TEXT.SUPER + @ 0=?if  exit  then  repeat  !constructor nip true ;
+    drop  §TEXT @#segment@ TEXT.SUPER + @ 0=?if  exit  then  repeat  !constructor -rot 2drop true ;
 
 vocabulary;

@@ -18,7 +18,7 @@ create ERROR-TEXTS
   011 ,  "AGAIN",             "Try again",
   012 ,  "ENDMEM",            "Out of memory",
   013 ,  "EACCES",            "Permission denied",
-  014 ,  "EFAULT",            "Bad address",
+  014 ,  "EFAULT",            "Invalid memory address",
   015 ,  "ENOTBLK",           "Block device required",
   016 ,  "EBUSY",             "Device or resource busy",
   017 ,  "EEXIST",            "File exists",

@@ -11,7 +11,7 @@ import force/exception/Exception
 import force/exception/ExceptionHandler
 ( import force/logging/Log )
 
-import force/debug/DebugIO
+import force/debug/Debug
 
 vocabulary Exceptions
 

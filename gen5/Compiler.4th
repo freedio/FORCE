@@ -7,6 +7,7 @@ vocabulary Compiler
   requires" Heap.voc"
   requires" Vocabulary.voc"
   requires" Relocation.voc"
+  requires" AsmBase-IA64.voc"
   requires" MacroForcembler-IA64.voc"
 
 === Code Builder ===
@@ -79,7 +80,8 @@ variable CODEMODEL                ( Target code model: 0 = inline, 1 = direct, 2
   &here >r dup code@# ?joiner #,  ?linker  dup word>netcode swap Code# r> copyRelocations ;
 ( Compiles word &w inline.  If the code fragment is small enough, it is copied, along with its
   relocations and debug info, otherwise a call is inserted. )
-: punchInline ( &w -- ) dup Code# MAXCODE4COPY ≤if  copyCode  else  callCode  then ;
+: punchInline ( &w -- )  deferred? if  callCode exit  then
+  dup Code# MAXCODE4COPY ≤if  copyCode  else  callCode  then ;
 ( Punches a reference to the code of word &w into the code being built. )
 : punchDirect ( &w -- ) word>code &here REL.ABS64 reloc, ;
 ( Punches a reference to word &w into the code being built. )
