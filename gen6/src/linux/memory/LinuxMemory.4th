@@ -7,7 +7,8 @@ import force/exception/InvalidArgumentException
 import linux/memory/trouble/MemoryReallocationError
 import force/memory/Page
 import force/memory/SmallPage
-import linux/Linux
+import linux/system/Linux
+import linux/system/UnixErrors
 
 vocabulary Memory
 
@@ -132,7 +133,7 @@ public static : allocatePage0 ( -- a )  allocatePage  dup Page# cellu/ 0 fill ;
 : @freeSmallPage ( # -- a )  >r PageDirectory@ r@ 4u* + d@ >page
   begin 0=?while  dup SmallPage#Free@ 0≠if  exit  then  Successor@  repeat  @newSmallPage ;
 ( Returns address a of a large page for with enough free space to accommodate an entry of size #. )
-: @freeLargePage ( # -- a )  >r PageDirectory@ ... ;
+: @freeLargePage ( # -- a )  ... ( >r PageDirectory@ d@ >page begin 0=?while  dup LargePage ) ;
 ( Returns address a of a huge page for with enough free space to accommodate an entry of size #. )
 : @freeHugePage ( # -- a )  ... ;
 ( Returns address a of a page for entries of size # with enough free space to accommodate an entry
@@ -183,9 +184,13 @@ public static section --- API
   dup 512<?if  allocSmallObj  else  4080<?if  allocLargeObj  else  allocHugeObj  then  then
   tuck -rot 0 cfill ;
 
+( Returns the top memory address. )
+: topmem ( -- a )  ProgramBreak@ ;
+
 ( Initializes the vocabulary from initialization structure at address @initstr when loading. )
-private init : init ( @initstr -- @initstr )  0 pgmbreak dup ProgramBreak!
-  allocatePage0 PageArray!  allocatePage0 ObjectSpace! ProgramBreak@ InitialBreak! ;
+private init : init ( @initstr -- @initstr )
+  0 pgmbreak unless  >errmsg 1 "Fatal error while initializing Linux memory: %s"abort  then
+  ProgramBreak!  allocatePage0 PageArray!  allocatePage0 ObjectSpace! ProgramBreak@ InitialBreak! ;
 
 vocabulary;
 export LinuxMemory

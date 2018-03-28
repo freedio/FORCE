@@ -8,6 +8,7 @@ vocabulary Heap
   requires" OS.voc"
   requires" StringFormat.voc"
   requires" Memory.voc"
+  requires" LogLevel.voc"
 
 === Heap List Management ===
 
@@ -92,7 +93,7 @@ cell+ constant HEAP#              ( Size of the heap structure )
 ( Adds # to the length of heap #h. )
 : heap+! ( # #h -- )  #heap@ @heap+! ;
 ( Adds u bytes to the capacity of heap @h. )
-: _extendHeap ( @h u -- )  cr "Extending heap.".
+: _extendHeap ( @h u -- )  debug? if  cr "Extending heap.".  then
   over @heap## +  PAGE# 1− + PAGE# u/ 2dup @heap++!
   over @heap@ swap dup 1+ resize 0bit+ swap @heap! ;
 ( Extends heap #h, if necessary, to accommodate # more bytes. )
@@ -134,6 +135,8 @@ cell+ constant HEAP#              ( Size of the heap structure )
 : 0#, ( # -- )  dup allot@ swap 0 cfill ;
 ( Punches counted string a$ onto current heap. )
 : $, ( a$ -- )  dup c@ 1+ #, ;
+( Punches quoted counted string a$ onto current heap, stripping the quotes. )
+: "$", ( a$ -- )  dup 2+ swap c@ 1− dup allot@ swap 1− swap 2dup c! 1+ swap cmove ;
 ( Allots # bytes on current heap. )
 : allot ( # -- )  allot@ drop ;
 ( Allots # bytes on current heap and clears the area to all zeroes.  # must be > 0! )

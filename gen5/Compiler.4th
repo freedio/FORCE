@@ -25,7 +25,7 @@ vocabulary Compiler
 ( Compiles a "load float" instruction for float r. )
 : compileFloat ( -- :F: r -- )  "(loadFloat)" callTarget 8 allot@ f! ;
 ( Compiles a "load string" instruction for string a$. )
-: compileString ( a$ -- )  STRING,  $,  STREND, ;
+: compileString ( a$ -- )  STRING,  "$",  STREND, ;
 ( Compiles int clause &w with value x. )
 : compileIntClause ( x &w -- ) "Don't know how to compile a target int clause!"abort ;
 ( Compiles char clause &w with value x. )
@@ -44,6 +44,7 @@ vocabulary Compiler
 2 constant EXIT_FIELD#            ( The length of the EXIT_FIELD code in bytes )
 16 constant MAXCODE4COPY          ( Maximum net code size for copying in bytes )
 variable CODEMODEL                ( Target code model: 0 = inline, 1 = direct, 2 = indirect )
+variable LOC                      ( Location of copied code for relocations )
 
 ( Changes the offset of referent &w so that it points at the net code field [after ENTER]. )
 : word>netcode ( &w -- &code )  dup &@ d@++ tuck ( fl a fl ) FLAG.ENTER bit? ENTER# and ( fl a u )
@@ -64,7 +65,7 @@ variable CODEMODEL                ( Target code model: 0 = inline, 1 = direct, 2
 : copyRelocations ( &code # &r -- )  2pick referentVocabulary dup assertDependency
   #vocabulary@ §RELT @#segment@# RELOCATION# u/ 0 do  dup REL.SOURCE + @
   stripReferent 4pick 4pick &within if  dup REL.SOURCE + @ referentOffset 4pick referentOffset −
-    2pick swap &+ over REL.SOURCE + @ swap referentOffset! over REL.TARGET + @ swap splitReferent reloc,  then  RELOCATION# + loop  4drop ;
+    2pick swap &+ over REL.SOURCE + @ swap referentOffset! over REL.TARGET + @ swap splitReferent 1000.s reloc,  then  RELOCATION# + loop  4drop ;
 ( Checks if the last contribution was a linker. )
 : linker? ( -- ? )  LINKER @ ;
 ( Sets the LINKER variable if word &w is a linker. )
@@ -102,5 +103,10 @@ variable CODEMODEL                ( Target code model: 0 = inline, 1 = direct, 2
   #vocabulary@ dup §TEXT @#segment@ TEXT.VOCFLAGS + VOC%CLASS bit@ unless
     @vocabulary$ 1 "Vocabulary «%s» is not a class!"|! abort  then
   PushedVoc -1!  dup class# ALLOC,  findConstructor if  compileTarget  then ;
+
+=== Stray Utils ===
+
+: getDirectI/OTargetWord ( w$ -- &w )  findTargetWord unless
+    1 "Word «%s» not found — import force/inout/DirectIO module!"|abort  then ;
 
 vocabulary;

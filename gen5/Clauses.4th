@@ -181,13 +181,13 @@ vocabulary Clauses
 === Storage Clauses ===
 
 ( Sets byte at address a to _c. )
-: _#c! ( a _c -- )  # BYTE PTR 0 [RAX] MOV ;
+: _#c! ( a _c -- )  # BYTE PTR 0 [RAX] MOV  DROP, ;
 ( Sets word at address a to _w. )
-: _#w! ( a _w -- )  # WORD PTR 0 [RAX] MOV ;
+: _#w! ( a _w -- )  # WORD PTR 0 [RAX] MOV  DROP, ;
 ( Sets double-word at address a to _d. )
-: _#d! ( a _d -- )  # DWORD PTR 0 [RAX] MOV ;
+: _#d! ( a _d -- )  # DWORD PTR 0 [RAX] MOV  DROP, ;
 ( Sets quadword at address a to _q. )
-: _#q! ( a _q -- )  # QWORD PTR 0 [RAX] MOV ;  alias _#!
+: _#q! ( a _q -- )  # QWORD PTR 0 [RAX] MOV  DROP, ;  alias _#!
 
 === Memory Arithmetics ===
 
@@ -219,22 +219,51 @@ vocabulary Clauses
 : _#q−!@ ( a _q -- q )  # QWORD PTR 0 [RAX] SUB  0 [RAX] RAX MOV ;  alias _#−!@  alias _#q-!@
   alias _#-!@
 
+--- Number and character builders ---
+
+( Multiplies unsigned quad-word at a with _u and adds u. )
+: _#q*+! ( u a _u -- )  1 ADP+  RAX RCX MOV  1 ADP-  # RAX MOV  QWORD PTR 0 [RCX] MUL  RDX POP
+  RDX RAX ADD  RAX 0 [RCX] MOV  DROP, ;
+( Multiplies signed quad-word at a with _u and adds u. )
+: _#l*+! ( u a _u -- )  1 ADP+  RAX RCX MOV  1 ADP-  # RAX MOV  QWORD PTR 0 [RCX] IMUL  RDX POP
+  RDX RAX ADD  RAX 0 [RCX] MOV  DROP, ;
+( Multiplies unsigned double-word at a with _d and adds d. )
+: _#d*+! ( d a _d -- )  1 ADP+  RAX RCX MOV  1 ADP-  # EAX MOV  DWORD PTR 0 [RCX] MUL  RDX POP
+  EDX EAX ADD  EAX 0 [RCX] MOV  DROP, ;
+( Multiplies signed double-word at a with _i and adds i. )
+: _#i*+! ( i a _i -- )  1 ADP+  RAX RCX MOV  1 ADP-  # EAX MOV  DWORD PTR 0 [RCX] IMUL  RDX POP
+  EDX EAX ADD  EAX 0 [RCX] MOV  DROP, ;
+( Multiplies unsigned word at a with _d and adds d. )
+: _#w*+! ( w a _w -- )  1 ADP+  RAX RCX MOV  1 ADP-  # AX MOV  WORD PTR 0 [RCX] MUL  RDX POP
+  DX AX ADD  AX 0 [RCX] MOV  DROP, ;
+( Multiplies signed word at a with _s and adds s. )
+: _#s*+! ( s a _s -- )  1 ADP+  RAX RCX MOV  1 ADP-  # AX MOV  WORD PTR 0 [RCX] IMUL  RDX POP
+  DX AX ADD  AX 0 [RCX] MOV  DROP, ;
+( Multiplies unsigned byte at a with _c and adds c. )
+: _#c*+! ( c a _c -- )  1 ADP+  RAX RCX MOV  1 ADP-  # AL MOV  BYTE PTR 0 [RCX] MUL  RDX POP
+  DL AL ADD  AL 0 [RCX] MOV  DROP, ;
+( Multiplies signed byte at a with _b and adds b. )
+: _#b*+! ( b a _b -- )  1 ADP+  RAX RCX MOV  1 ADP-  # AL MOV  BYTE PTR 0 [RCX] IMUL  RDX POP
+  DL AL ADD  AL 0 [RCX] MOV  DROP, ;
+
 === Memory Logicals ===
 
+( Tests bit _# of byte range starting at address a. )
 : _#bit@ ( a _# -- ? )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX RAX SBB ;
 
 === String Clauses ===
 
 ( Formats string template literal _$ fitted with # arguments ... )
-: _$| ( ... # _$ -- ShortString:s )  compileString  "ShortString" findTargetVocabulary unless
-  1 "Target vocabulary «%s» not found: please add it to the imports!"|abort  then
-  pushVocabulary createObject  "formatShortString" getTargetWord  compileTarget ;
-: _$! ( _$ -- )  compileString "!." getTargetWord  compileTarget ;
-
-/*
-( Prints string template literal _$ fitted with # arguments ... )
-: _$|. ( ... # _$ -- )  $| $. ;
-*/
+: _$| ( ... # _$ -- ShortString:s )  compileString  "format" getDirectI/OTargetWord  compileTarget ;
+( Prints string template literal _$ fitted with # arguments ... to stdout. )
+: _$|. ( ... # _$ -- )  _$|  "$." getDirectI/OTargetWord  compileTarget ;
+( Prints short string _$ with error style on a new line to stderr. )
+: _$! ( _$ -- )  compileString  "!$." getDirectI/OTargetWord  compileTarget ;
+( Formats string template literal _$ fitted with # arguments ... with error style on a new line. )
+: _$|! ( ... # _$ -- )  _$|  "!$." getDirectI/OTargetWord  compileTarget ;
+( Prints short string _$ with error style on a new line and aborts the process. )
+: _$abort ( _$ -- )  _$!  "abort" getTargetWord  compileTarget ;
+: _$|abort ( ... # _$ -- )  _$|!  "abort" getTargetWord  compileTarget ;
 
 === Debugging Clauses ===
 

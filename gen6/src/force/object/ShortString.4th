@@ -6,7 +6,6 @@ package force/object/
 
 import force/lang/Forth
 import force/object/Object
-
 import force/debug/Debug
 
 Object class ShortString

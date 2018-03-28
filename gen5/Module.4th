@@ -103,7 +103,7 @@ create INITSTRUCT                   ( structure passed to initialization functio
   #segments 0 do  d@++ top-> 3pick seekFile unlessever
     >errtext 2pick name@ 2 "Error while seeking module «%s»: %s!"|abort  then
   drop d@++ ?dupif  i >segment  dup allot@ swap 3pick readFile! segment>  then  loop  drop
-  discardFile  targetVoc# dup resolveDependencies  dup applyRelocations  dup voc>dict  dup runInits
+  discardFile  targetVoc# dup resolveDependencies  dup applyRelocations  dup voc>dict  debug? if  dup #vocabulary$ cr 1 "Running %s.init"|log  then  dup runInits
   dup targetVoc! ;
 ( Saves the target vocabulary as module m$ [no file extension!]. )
 : saveModule ( m$ -- )  +package$ dup freezeVocabulary  composeModulePath  dup createPathComponents

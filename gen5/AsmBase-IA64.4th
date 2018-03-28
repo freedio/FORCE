@@ -375,6 +375,8 @@ variable control ( Various flags )
 : reloc+ ( -- )         21 control+ ;
 : noREX? ( -- ? )       22 control? ;
 : noREX+ ( -- )         22 control+ ;
+: relrel? ( -- ? )      23 control? ;
+: relrel+ ( -- )        23 control+ ;
 
 1 constant #REX.B
 2 constant #REX.X
@@ -682,18 +684,21 @@ bytevar OP#
 
 --- Operation Builders ---
 
-: ?reloc16 ( -- )  reloc? if  reloc@ &here -2 &+ REL.ABS16 reloc,  then ;
-: ?reloc32 ( -- )  reloc? if  reloc@ &here -4 &+ REL.ABS32 reloc,  then ;
-: ?reloc64 ( -- )  reloc? if  reloc@ &here -8 &+ REL.ABS64 reloc,  then ;
+: ?reloc16 ( -- )
+  reloc? if  reloc@ &here -2 &+ relrel? dup REL.REL16 and swap not REL.ABS16 and or reloc,  then ;
+: ?reloc32 ( -- )
+  reloc? if  reloc@ &here -4 &+ relrel? dup REL.REL32 and swap not REL.ABS32 and or reloc,  then ;
+: ?reloc64 ( -- )
+  reloc? if  reloc@ &here -8 &+ relrel? dup REL.REL32 and swap not REL.ABS64 and or reloc,  then ;
 
-: #punch ( n # -- )  !fits
+: #punch ( n # -- )  100.s !fits
        0 =?if  drop c,  exit  then
    #BYTE =?if  drop c,  exit  then
    #WORD =?if  drop w, ?reloc16  exit  then
   #DWORD =?if  drop d, ?reloc32  exit  then
   #QWORD =if   d, ?reloc32  else
   drop INVALID_IMMEDIATE_SIZE$ error  then  ;
-: ##punch ( n # -- )  !fits
+: ##punch ( n # -- )  200.s !fits
        0 =?if  drop c,  exit  then
    #BYTE =?if  drop c,  exit  then
    #WORD =?if  drop w, ?reloc16  exit  then
@@ -827,8 +832,7 @@ bytevar OP#
 : jmp-rel8 ( opc )  drop #BYTE there 2+ reladdr  $EB op, ;
 : jmpcall-imm ( opc imm )
   drop imm@ there - -126 130 within near? andn reloc? andn if  dup if  jmp-rel8 exit  then  then
-  imm@ swap addrwidth@ DWORD min dup 1+  there + reladdr $E8+ op&,
-  reloc? if  reloc@ &here REL.REL32 reloc,  then  drop cleanup ;
+  imm@ swap addrwidth@ DWORD min dup 1+  there + reladdr $E8+ relrel+ op&,  drop cleanup ;
 : jmpcall-far ( opc addr )  FAR_CALL_UNSUPPORTED$ error  swap $50 * $9A+ op, ;
 : jmpcall-r/m ( opc r/m )  swap 2* 2+ reg! modr/m! $FF op, ;
 : jmpcall ( target / opc )

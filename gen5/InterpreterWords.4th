@@ -106,9 +106,6 @@ vocabulary InterpreterWords
 
 === Word Operations ===
 
-: find ( >name -- &w )  readWord  info? if  espace dup "$"..  then
-  findTargetWord unless  1 "Word «%s» not found!"|!  else  1 cr "Word referent: %016x"|. then ;
-
 ( Sets PRIVATE scope. )
 : private ( -- )  CURRENT-FLAGS dup @ 3 andn SCOPE.PRIVATE or swap ! ;
 ( Sets PROTECTED scope. )
@@ -124,6 +121,13 @@ vocabulary InterpreterWords
 
 ( Transfers the current flags to the section flags and skips the rest of the line as comment. )
 : section ( -- )  CURRENT-FLAGS @ SECTION-FLAGS !  skip2EOL ;
+
+=== Punching Constants ===
+
+( Punches short string a$ into the data segment. )
+: $, ( a$ -- )  >data $, segment> ;
+( Punches word referent &w into the data segment and creates an absolute relocation for it. )
+: ', ( &w -- )  >data &here over , segment> REL.ABS64 reloc, ;
 
 === I/O Operations ===
 
@@ -201,6 +205,12 @@ vocabulary InterpreterWords
   symbol>dict  Unfulfilled 1+! ;
 ( Resolves deferred word "name". )
 : fulfills ( >name -- )  readWord info? if  espace dup $..  then  @CURRENTWORD @ swap fulfill ;
+
+=== References ===
+
+( Returns the referent for target word "name". )
+: ' ( >name -- &w )  readWord  info? if  espace dup $..  then
+  getTargetWord ;
 
 === Heap Allocation ===
 

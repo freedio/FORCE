@@ -20,6 +20,8 @@ protected static :: (next) ( TODO implementation ) ;;
 
 ( Returns the cell size. )
 : cell ( -- cell# )  CELL, ;
+( Returns the cell shift. )
+: %cell ( -- %cell )  %CELL, ;
 ( Adds cell size to x. )
 : cell+ ( x -- x+cell# )  CELLPLUS, ;
 ( Multiplies n by cell size. )
@@ -108,6 +110,9 @@ cell+ constant ExHandler#
 : roll ( x₁ x₂ ... xu u -- x₂ ... xu x₁ )  ROLL, ;
 ( Rotates u cells on the stack down. )
 : -roll ( x₁ x₂ ... xu u -- x₂ ... xu x₁ )  NEGROLL, ;
+
+( Duplicates top of stack unless it's zero. )
+: ?dup ( x -- x [x] )  ?DUP, ;
 
 --- Return Stack Operations ---
 
@@ -335,6 +340,8 @@ cell+ constant ExHandler#
 
 === Logical Stack Operations ===
 
+--- Logops ---
+
 ( Conjoins two stack cells x1 and x2 giving x3. )
 : and ( x1 x2 -- x3 )  AND, ;
 ( Bijoins two stack cells x1 and x2 giving x3. )
@@ -344,6 +351,8 @@ cell+ constant ExHandler#
 ( Complements stack cell x1. )
 : not ( x1 -- ¬x1 )  NOT, ;
 
+--- Shift and Rotate ---
+
 ( Shifts u logically left by # bits. )
 : u<< ( u # -- u' )  SHL, ;  alias u≪
 ( Shifts u logically right by # bits. )
@@ -352,6 +361,29 @@ cell+ constant ExHandler#
 : << ( n # -- n' )  SAL, ;  alias ≪
 ( Shifts n arithmetically right by # bits. )
 : >> ( n # -- n' )  SAR, ;  alias ≫
+
+--- Bitops ---
+
+( Tests if bit # is set in x. )
+: bit? ( x # -- ? )  BTST, ;
+( Sets bit # in x. )
+: bit+ ( x # -- )  BSET, ;
+( Clears bit # in x. )
+: bit− ( x # -- )  BCLR, ;  alias bit-
+( Flips bit # in x. )
+: bit× ( x # -- )  BCHG, ;  alias bit*
+( Tests bit # in x, then sets it.  This operation is not atomic. )
+: bit?+ ( x # -- ? )  BTSTSET, ;
+( Tests bit # in x, then clears it.  This operation is not atomic. )
+: bit?− ( x # -- )  BTSTCLR, ;  alias bit-
+( Tests bit # in x, then flips it.  This operation is not atomic. )
+: bit?× ( x # -- )  BTSTCHG, ;  alias bit*
+( Atomically tests bit # in x and sets it. )
+: !bit?+ ( x # -- ? )  ABTSTSET, ;
+( Atomically tests bit # in x and clears it. )
+: !bit?− ( x # -- )  ABTSTCLR, ;  alias !bit-
+( Atomically tests bit # in x and flips it. )
+: !bit?× ( x # -- )  ABTSTCHG, ;  alias !bit*
 
 === Storage Operations ===
 
@@ -520,6 +552,38 @@ cell+ constant ExHandler#
 ( Subtracts q from quad-word at address a. )
 : q−! ( q a -- )  QSUB, ;  alias −!  alias q-!  alias -!
 
+=== Logical Memory Operations ===
+
+--- Bitops ---
+
+/*
+ * In the following bit operations, the "memory starting at address a" indicates an open range of
+ * memory with origin a.  The bit number # can be quite a large number, and the actual operation
+ * takes place on cell (a + # u/ %cell).  Bit (# u% %cell) will be tested or affected by the
+ * operation.
+ */
+
+( Tests if bit # is set in memory starting at address a. )
+: bit@ ( a # -- ? )  BTSTAT, ;
+( Sets bit # in memory starting at address a. )
+: bit+! ( a # -- )  BSETAT, ;
+( Clears bit # in memory starting at address a. )
+: bit-! ( a # -- )  BCLRAT, ;  alias bit!-
+( Flips bit # in memory starting at address a. )
+: bit×! ( a # -- )  BCHGAT, ;  alias bit!*
+( Tests bit # in memory starting at address a, then sets it.  This operation is not atomic. )
+: bit@+ ( a # -- ? )  BTSTSETAT, ;
+( Tests bit # in memory starting at address a, then clears it.  This operation is not atomic. )
+: bit@− ( a # -- ? )  BTSTCLRAT, ;  alias bit@-
+( Tests bit # in memory starting at address a, then flips it.  This operation is not atomic. )
+: bit@× ( a # -- ? )  BTSTCHGAT, ;  alias bit@*
+( Atomically tests bit # in memory starting at address a and sets it. )
+: !bit@+ ( a # -- ? )  ABTSTSETAT, ;
+( Atomically tests bit # in memory starting at address a and clears it. )
+: !bit@− ( a # -- ? )  ABTSTCLRAT, ;  alias !bit@-
+( Atomically tests bit # in memory starting at address a and flips it. )
+: !bit@× ( a # -- ? )  ABTSTCHGAT, ;  alias !bit@*
+
 === Block Operations ===
 
 ( Fills byte buffer of length # at address a with c. )
@@ -532,6 +596,19 @@ cell+ constant ExHandler#
 : qfill ( a # q -- )  QFILL, ;
 ( Fills cell buffer of length # at address a with x. )
 : fill ( a # x -- )  QFILL, ;
+
+( Looks up c in byte buffer of length # at address a.  Returns 0 if not found, otherwise the 1-based
+  index of the location u of the occurrence. )
+: cfind ( a # c -- u )  CFIND, ;
+( Looks up w in word buffer of length # at address a.  Returns 0 if not found, otherwise the 1-based
+  index of the location u of the occurrence. )
+: wfind ( a # w -- u )  WFIND, ;
+( Looks up d in double-word buffer of length # at address a.  Returns 0 if not found, otherwise the
+  1-based index of the location u of the occurrence. )
+: dfind ( a # d -- u )  DFIND, ;
+( Looks up d in quad-word buffer of length # at address a.  Returns 0 if not found, otherwise the
+  1-based index of the location u of the occurrence. )
+: qfind ( a # q -- u )  QFIND, ;
 
 === Short String Operations ===
 
@@ -575,6 +652,11 @@ cell+ constant ExHandler#
 : ≥ ( n1 n2 -- n1≥n2 )  ISNOTLESS, ;  alias >=
 ( Tests if u1 is greater than or equal to u2. )
 : u≥ ( u1 u2 -- u1≥u2 )  ISNOTBELOW, ;  alias u>=
+
+=== Code Invocation ===
+
+( Executes code of word at address a. )
+: execute ( a -- )  EXECUTE, ;
 
 === Module Initialization ===
 

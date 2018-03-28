@@ -20,27 +20,32 @@ cell+ constant RELOCATION#        ( Size of a relocation entry )
 00 constant REL.ABS64             ( Absolute 64-bit relocation )
 01 constant REL.ABS32             ( Absolute 32-bit relocation )
 02 constant REL.ABS16             ( Absolute 16-bit relocation )
-08 constant REL.REL32             ( Relative 32-bit relocation.  Source referent points past addr. )
+09 constant REL.REL32             ( Relative 32-bit relocation.  Source referent points at addr. )
+10 constant REL.REL16             ( Relative 16-bit relocation.  Source referent points at addr. )
 
 ( Creates a relocation entry with target &t, source &s, and type tp, returning a referent to
   relocation entry &rel. )
-: createRelocation ( &t &s tp -- &rel )  REFERENT.EXTRA u<< or >relt &here -rot , , segment> ;
+: createRelocation ( &t &s tp -- &rel )  42.s REFERENT.EXTRA u<< or >relt &here -rot , , segment> ;
 ( Applies absolute 64-bit relocation @rel. )
 : applyRelAbs64 ( @rel -- )  dup REL.TARGET + @ &@ swap REL.SOURCE + @ stripReferent &@ q! ;
 ( Applies absolute 32-bit relocation @rel. )
 : applyRelAbs32 ( @rel -- )  dup REL.TARGET + @ &@ swap REL.SOURCE + @ stripReferent &@ d! ;
 ( Applies absolute 16-bit relocation @rel. )
 : applyRelAbs16 ( @rel -- )  dup REL.TARGET + @ &@ swap REL.SOURCE + @ stripReferent &@ w! ;
-( Applies relcative 32-bit relocation @rel. )
+( Applies relative 32-bit relocation @rel. )
 : applyRelRel32 ( @rel -- )
-  dup REL.TARGET + @ &@ 4− swap REL.SOURCE + @ &@ stripReferent 4− tuck − swap d! ;
+  dup REL.TARGET + @ &@ swap REL.SOURCE + @ &@ stripReferent tuck 4+ − swap d! ;
+( Applies relative 16-bit relocation @rel. )
+: applyRelRel16 ( @rel -- )
+  dup REL.TARGET + @ &@ swap REL.SOURCE + @ &@ stripReferent tuck 4+ − swap w! ;
 ( Applies the relocation referred to by &rel. )
 : applyRelocation ( @rel -- )  dup REL.SOURCE + @ referentExtra
   0=?if  drop applyRelAbs64  else
   1=?if  drop applyRelAbs32  else
   2=?if  drop applyRelAbs16  else
-  8=?if  drop applyRelRel32  else
-  1 "Unknown relocation type: %d"|abort  then  then  then  then ;
+  9=?if  drop applyRelRel32  else
+  10=?if  drop applyRelRel16  else
+  1 "Unknown relocation type: %d"|abort  then  then  then  then  then ;
 : applyRelocation& ( &rel -- )  &@ applyRelocation ;
 ( Creates a relocation entry from source referent &s and target referent &t with type tp, and
   applies the relocation entry. )

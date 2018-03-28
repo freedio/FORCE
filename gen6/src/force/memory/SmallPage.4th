@@ -1,5 +1,5 @@
 /**
-  * Memory page for small objects (size from 1 to 250 bytes).
+  * Memory page for small objects (size from 1 to 512 bytes).
   */
 
 package force/memory/

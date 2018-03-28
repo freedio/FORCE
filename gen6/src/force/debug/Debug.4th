@@ -8,7 +8,7 @@
 
 package force/debug/
 
-import linux/Linux
+import linux/system/Linux
 import force/inout/DirectIO
 
 vocabulary Debug

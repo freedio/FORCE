@@ -175,7 +175,7 @@ create CLAUSE$  256 0allot        ( Buffer for building a clause )
 ( Checks if a$ represents a known string clause.  If so, returns the value part v$, the clause word
   referent &w and true, otherwise the input string and false. )
 : stringClause$? ( a$ -- v$ &w t | a$ f )  beginParse eatDblQuote eatChars eatDblQuote
-  "_$" findClause dup if  $STRING @ #STRING @ 1+ dup allocate tuck >r cmove r> -rot  then ;
+  "_$" findClause dup if  $STRING @ #STRING @ dup 1+ allocate 2dup c! 1+ tuck >r cmove r> 1− -rot  then ;
 ( Checks if a$ is the name of loaded vocabulary.  If so, returns the vocabulary number and true,
   otherwise the inoput string and false. )
 : vocabulary$? ( a$ -- #voc t | a$ f )  false ( TODO: document and implement ) ;

@@ -22,11 +22,6 @@ private static section --- Internals
 create Buffer  256 allot          ( Buffer for various outputs. )
 create @Buffer                    ( End of buffer address. )
 
-( Writes short string a$ to the standard output channel. )
-: stdout$. ( a$ -- )  out. ;  alias $.
-( Writes short string a$ to the standard error channel. )
-: stderr$. ( a$ -- )  err. ;  alias e$.
-
 ( Converts unsigned number u to its radix r string equivalent in a transient buffer u$. )
 : #u>$ ( u r -- u$ )  >r @Buffer 0 rot begin  r@ ÷% ( a # u' c )  dup 9u> 7and +  '0'+
   4roll --c! rot 1+ rot 0=until  swap --c!  r> drop ;
@@ -43,10 +38,14 @@ create @Buffer                    ( End of buffer address. )
 
 public static section --- API
 
+( Writes short string a$ to the standard output channel. )
+: $. ( a$ -- )  out. ;
+( Writes short string a$ to the standard error channel. )
+: $.. ( a$ -- )  err. ;
 ( Emits unicode character uc as UTF-8 to standard output. )
-: emit ( uc -- )  Buffer dup dup 0c! uc>utf8$ stdout$. ;
+: emit ( uc -- )  Buffer tuck dup 1c! 1+ c! ( 0c! uc>utf8$ ) $. ;
 ( Emits unicode character uc as UTF-8 to standard error. )
-: eemit ( uc -- )  Buffer dup dup 0c! uc>utf8$ stderr$. ;
+: eemit ( uc -- )  Buffer tuck dup 1c! 1+ c! ( 0c! uc>utf8$ ) $.. ;
 ( Advances the cursor to the beginning of next line by sending a NEWLINE to stdout. )
 : cr ( -- )  10 emit ;
 ( Advances the cursor to the beginning of next line by sending a NEWLINE to stderr. )
@@ -56,20 +55,20 @@ public static section --- API
 ( Advances the cursor by sending a BLANK to stderr. )
 : espace ( -- )  bl eemit ;
 ( Prints number n to standard output. )
-: . ( n -- )  Buffer tuck n>$ stdout$. ;
+: n. ( n -- )  n>$ $. ;
 ( Prints number n to standard error. )
-: e. ( n -- )  Buffer tuck n>$ stdout$. ;
+: e. ( n -- )  n>$ $.. ;
 ( Prints unsigned number u to standard output. )
-: u. ( n -- )  Buffer tuck u>$ stdout$. ;
+: u. ( n -- )  u>$ $. ;
 ( Prints unsigned number u to standard error. )
-: eu. ( n -- )  Buffer tuck u>$ stderr$. ;
+: eu. ( n -- )  u>$ $.. ;
 ( Prints unsigned number u to standard output as hex nmber. )
-: hu. ( n -- )  Buffer tuck hu>$ stdout$. ;
+: hu. ( n -- )  hu>$ $. ;
 ( Prints unsigned number u to standard error as hex number. )
-: ehu. ( n -- )  Buffer tuck hu>$ stderr$. ;
+: ehu. ( n -- )  hu>$ $.. ;
 
 ( Prints string a$ as an error message (highlighted) to stderr. )
-: !. ( a$ -- )  "\e[1m" e$.  e$.  "\e[22m" e$. ;
+: !$. ( a$ -- )  "\e[1m" $..  $..  "\e[22m" $.. ;
 
 vocabulary;
 export DirectIO

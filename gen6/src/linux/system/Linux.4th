@@ -4,7 +4,7 @@
   * --> Contains Assembler Code <---
   */
 
-package linux/
+package linux/system/
 
 import force/lang/Forth
 
@@ -49,9 +49,9 @@ public static section --- API -------------------------------------
 === Simple Outputs ===
 
 ( Prints a$ to stdout. )
-: out. ( a$ -- )  1 swap count write ;
+: out. ( a$ -- )  1 swap count write  2drop ;
 ( Prints a$ to stderr. )
-: err. ( a$ -- )  2 swap count write ;
+: err. ( a$ -- )  2 swap count write  2drop ;
 
 vocabulary;
 export Linux
