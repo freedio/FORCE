@@ -17,7 +17,7 @@ vocabulary Clauses
 : _#roll ( ... _# -- ... )  # RCX MOV  RDX RDX XOR
   BEGIN  RCX DEC  0> WHILE  0 [RSP] [RDX] *CELL RAX XCHG  RDX INC  REPEAT  nolink ;
 
-=== Stack Arithemtic Clauses ===
+=== Stack Arithmetic Clauses ===
 
 ( Adds _n to x. )
 : _#+ ( x _n -- x+_n )  # RAX ADD ;

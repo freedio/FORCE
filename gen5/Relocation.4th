@@ -25,7 +25,7 @@ cell+ constant RELOCATION#        ( Size of a relocation entry )
 
 ( Creates a relocation entry with target &t, source &s, and type tp, returning a referent to
   relocation entry &rel. )
-: createRelocation ( &t &s tp -- &rel )  42.s REFERENT.EXTRA u<< or >relt &here -rot , , segment> ;
+: createRelocation ( &t &s tp -- &rel )  REFERENT.EXTRA u<< or >relt &here -rot , , segment> ;
 ( Applies absolute 64-bit relocation @rel. )
 : applyRelAbs64 ( @rel -- )  dup REL.TARGET + @ &@ swap REL.SOURCE + @ stripReferent &@ q! ;
 ( Applies absolute 32-bit relocation @rel. )

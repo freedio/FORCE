@@ -225,41 +225,41 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 ( Multiplies u₁ with u₂. )
 : UTIMES, ( u₁ u₂ -- u₁×u₂ )  RDX POP  RDX MUL  nolink ;
 ( Divides n₁ through n₂. )
-: THROUGH, ( n₁ n₂ -- n₁÷n₂ )  RCX POP  CQO  RCX IDIV  nolink ;
+: THROUGH, ( n₁ n₂ -- n₁÷n₂ )  RAX RCX MOV  RAX POP  CQO  RCX IDIV  nolink ;
 ( Divides n₂ through n₁. )
-: RTHROUGH, ( n₁ n₂ -- n₂÷n₁ )  RAX RCX MOV  RAX POP  CQO  RCX IDIV  nolink ;
+: RTHROUGH, ( n₁ n₂ -- n₂÷n₁ )  RCX POP  CQO  RCX IDIV  nolink ;
 ( Divides u₁ through u₂. )
-: UTHROUGH, ( u₁ u₂ -- u₁÷u₂ )  RCX POP  RDX RDX XOR  RCX DIV  nolink ;
+: UTHROUGH, ( u₁ u₂ -- u₁÷u₂ )  RAX RCX MOV  RAX POP  RDX RDX XOR  RCX DIV  nolink ;
 ( Divides u₂ through u₁. )
-: URTHROUGH, ( u₁ u₂ -- u₂÷u₁ )  RAX RCX MOV  RAX POP  RDX RDX XOR  RCX DIV  nolink ;
+: URTHROUGH, ( u₁ u₂ -- u₂÷u₁ )  RCX POP  RDX RDX XOR  RCX DIV  nolink ;
 ( Calculates the rest of the integer division n₁ through n₂. )
-: MOD, ( n₁ n₂ -- n₁%n₂ )  RCX POP  CQO  RCX IDIV  RDX RAX MOV  nolink ;
+: MOD, ( n₁ n₂ -- n₁%n₂ )  RAX RCX MOV  RAX POP  CQO  RCX IDIV  RDX RAX MOV  nolink ;
 ( Calculates the rest of the integer division n₂ through n₁. )
-: RMOD, ( n₁ n₂ -- n₂%n₁ )  RAX RCX MOV  RAX POP  CQO  RCX IDIV  RDX RAX MOV  nolink ;
+: RMOD, ( n₁ n₂ -- n₂%n₁ )  RCX POP  CQO  RCX IDIV  RDX RAX MOV  nolink ;
 ( Calculates the rest of the integer division u₁ through u₂. )
-: UMOD, ( u₁ u₂ -- u₁%u₂ )  RCX POP  RDX RDX XOR  RCX DIV  RDX RAX MOV  nolink ;
+: UMOD, ( u₁ u₂ -- u₁%u₂ )  RAX RCX MOV  RAX POP  RDX RDX XOR  RCX DIV  RDX RAX MOV  nolink ;
 ( Calculates the rest of the integer division u₂ through u₁. )
-: URMOD, ( u₁ u₂ -- u₂%u₁ )  RAX RCX MOV  RAX POP  RDX RDX XOR  RCX IDIV  RDX RAX MOV  nolink ;
+: URMOD, ( u₁ u₂ -- u₂%u₁ )  RCX POP  RDX RDX XOR  RCX IDIV  RDX RAX MOV  nolink ;
 ( Calculates the quotient and rest of the integer division n₁ through n₂. )
-: MODTHROUGH, ( n₁ n₂ -- n₁%n₂ n₁÷n₂ )  RCX POP  CQO  RCX IDIV  RDX PUSH  nolink ;
+: MODTHROUGH, ( n₁ n₂ -- n₁%n₂ n₁÷n₂ )  RAX RCX MOV  RAX POP  CQO  RCX IDIV  RDX PUSH  nolink ;
 ( Calculates the quotient and rest of the integer division n₂ through n₁. )
-: RMODTHROUGH, ( n₁ n₂ -- n₂%n₁ n₂÷n₁ )  RAX RCX MOV  RAX POP  CQO  RCX IDIV  RDX PUSH  nolink ;
+: RMODTHROUGH, ( n₁ n₂ -- n₂%n₁ n₂÷n₁ )  RCX POP  CQO  RCX IDIV  RDX PUSH  nolink ;
 ( Calculates the quotient and rest of the integer division u₁ through u₂. )
-: UMODTHROUGH, ( u₁ u₂ -- u₁%u₂ u₁÷u₂ )  RCX POP  RDX RDX XOR  RCX DIV  RDX PUSH  nolink ;
+: UMODTHROUGH, ( u₁ u₂ -- u₁%u₂ u₁÷u₂ )
+  RAX RCX MOV  RAX POP  RDX RDX XOR  RCX DIV  RDX PUSH  nolink ;
 ( Calculates the quotient and rest of the integer division u₂ through u₁. )
-: URMODTHROUGH, ( u₁ u₂ -- u₂%u₁ u₂÷u₁ )
-  RAX RCX MOV  RAX POP  RDX RDX XOR  RCX IDIV  RDX PUSH  nolink ;
+: URMODTHROUGH, ( u₁ u₂ -- u₂%u₁ u₂÷u₁ )  RCX POP  RDX RDX XOR  RCX IDIV  RDX PUSH  nolink ;
 ( Calculates the quotient and rest of the integer division n₁ through n₂. )
-: THROUGHMOD, ( n₁ n₂ -- n₁÷n₂ n₁%n₂ )  RCX POP  CQO  RCX IDIV  RAX PUSH  RDX RAX MOV  nolink ;
-( Calculates the quotient and rest of the integer division n₂ through n₁. )
-: RTHROUGHMOD, ( n₁ n₂ -- n₂÷n₁ n₂%n₁ )
+: THROUGHMOD, ( n₁ n₂ -- n₁÷n₂ n₁%n₂ )
   RAX RCX MOV  RAX POP  CQO  RCX IDIV  RAX PUSH  RDX RAX MOV  nolink ;
+( Calculates the quotient and rest of the integer division n₂ through n₁. )
+: RTHROUGHMOD, ( n₁ n₂ -- n₂÷n₁ n₂%n₁ )  RCX POP  CQO  RCX IDIV  RAX PUSH  RDX RAX MOV  nolink ;
 ( Calculates the quotient and rest of the integer division u₁ through u₂. )
 : UTHROUGHMOD, ( u₁ u₂ -- u₁÷u₂ u₁%u₂ )
-  RCX POP  RDX RDX XOR  RCX DIV  RAX PUSH  RDX RAX MOV  nolink ;
+  RAX RCX MOV  RAX POP  RDX RDX XOR  RCX DIV  RAX PUSH  RDX RAX MOV  nolink ;
 ( Calculates the quotient and rest of the integer division u₂ through u₁. )
 : URTHROUGHMOD, ( u₁ u₂ -- u₂÷u₁ u₂%u₁ )
-  RAX RCX MOV  RAX POP  RDX RDX XOR  RCX IDIV  RAX PUSH  RDX RAX MOV  nolink ;
+  RCX POP  RDX RDX XOR  RCX IDIV  RAX PUSH  RDX RAX MOV  nolink ;
 
 ( Increments x by 1. )
 : INC, ( x -- x+1 )  RAX INC  nolink ;
@@ -686,7 +686,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 === String Handling ===
 
 ( Inserts code to push the string address onto the stack. )
-: STRING, ( a$ -- a$ [a] )  1 ADP+  there # CALL  1 ADP-  &here >A  nolink ;
+: STRING, ( a$ -- a$ [a] )  1 ADP+  there # CALL  1 ADP-  &here -4 &+ >A  nolink ;
 ( Finishes string insertion. )
 : STREND, ( [a] -- )  A> &here swap REL.REL32 reloc,  SWAP,  nolink ;
 
@@ -742,15 +742,15 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : COUNT, ( a$ -- a # )  RAX RDX MOV  BYTE PTR 0 [RDX] RAX MOVZX  RDX INC  RDX PUSH  nolink ;
 ( Appends unsigned byte c to counted string in buffer at a$. )
 : CAPPEND$, ( c a$ -- )
-  BYTE PTR 0 [RAX] INC  BYTE PTR 0 [RAX] RCX MOVZX  RDX POP  DL 1 [RAX] [RCX] MOV  nolink ;
+  BYTE PTR 0 [RAX] INC  BYTE PTR 0 [RAX] RCX MOVZX  RDX POP  DL 0 [RAX] [RCX] MOV  DROP, ;
 
 === UTF8 ===
 
 ( Converts unicode character uc to UTF8 representation utf8 on the stack. )
-: TOUTF8, ( uc -- utf8 )  128 u# RAX CMP  0< UNLESS
+: TOUTF8, ( uc -- utf8 )  128 # RAX CMP  < UNLESS
   RDX RDX XOR  %1000000 u# RCX MOV
-  BEGIN  1 # CH SHR  8 # RDX SHL  AL DL MOV  %111111 u# DL AND  %10000000 u# DL OR  6 # RAX SHR
-  RCX RAX CMP  U< UNTIL  CL CH MOV  CL NOT  CH DEC  CH CL XOR  CL AL OR   8 # RDX SHL  AL DL MOV
+  BEGIN  1 # RCX SHR  8 # RDX SHL  AL DL MOV  %111111 u# DL AND  %10000000 u# DL OR  6 # RAX SHR
+  RCX RAX CMP  U< UNTIL  CL CH MOV  CL NOT  CH DEC  CH CL XOR  CL AL OR  8 # RDX SHL  AL DL MOV
   RDX RAX MOV  THEN  nolink ;
 
 === Blocks and Loops ===

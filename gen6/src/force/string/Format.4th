@@ -230,16 +230,16 @@ create Rules                      ( The list of rules. )
   0 Arg#!  0≠?if  over c@ ':'=if  parseArg#  then  then
   Control .?ReuseArg bit@− if  NextArg@ 1− 0 max NextArg!  then
   0≠?if  over c@ "bBsScCdDoOxXeEfFgG%‰tTn" count rot cfind ?dupunless
-    ecr "\e[1mWarning: Unknown formatting rule '" e$. eemit "' skipped.\e[22m" e$.  exit  then
+    ecr "\e[1mWarning: Unknown formatting rule '" $.. eemit "' skipped.\e[22m" $..  exit  then
   >r 1+> Rules r> 1− cells+ @ execute ;
 
 public static section --- API
 
 ( Formats template f$ using # arguments ... into buffer b$ with expected size 256. )
-: format$ ( ... # f$ b$ -- )  dup 256 0 cfill  >r  swap #Args!  2 NextArg!  0 Control!
+: format$ ( ... # f$ b$ -- )  1000.s dup 256 0 cfill  >r  swap #Args!  2 NextArg!  0 Control!
   count begin ?dup while
     r@ c@ 255=if  r> #Args@ 1+ udrop exit  then  ( Buffer overflow protection )
-    over c@ '%'=if  1+> formatArg  else  over c@ r@ count + c!  r@ 1c+!  then  repeat drop
+    over c@ '%'=if  1+> formatArg  else  over c@ r@ count + c!  r@ 1c+!  then  1+> repeat drop
   r> #Args@ 1+ udrop ;
 
 vocabulary;

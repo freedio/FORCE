@@ -691,14 +691,14 @@ bytevar OP#
 : ?reloc64 ( -- )
   reloc? if  reloc@ &here -8 &+ relrel? dup REL.REL32 and swap not REL.ABS64 and or reloc,  then ;
 
-: #punch ( n # -- )  100.s !fits
+: #punch ( n # -- )  !fits
        0 =?if  drop c,  exit  then
    #BYTE =?if  drop c,  exit  then
    #WORD =?if  drop w, ?reloc16  exit  then
   #DWORD =?if  drop d, ?reloc32  exit  then
   #QWORD =if   d, ?reloc32  else
   drop INVALID_IMMEDIATE_SIZE$ error  then  ;
-: ##punch ( n # -- )  200.s !fits
+: ##punch ( n # -- )  !fits
        0 =?if  drop c,  exit  then
    #BYTE =?if  drop c,  exit  then
    #WORD =?if  drop w, ?reloc16  exit  then

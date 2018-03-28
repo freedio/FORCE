@@ -18,7 +18,7 @@ vocabulary Debug
 
 ( On a new line, prints lbel n and the first 16 stack entries. )
 : #.s ( n -- )  ecr '<' eemit depth dup e. ?dupif  ':' eemit  0 swap 20 min -do
-  espace i 1− pick ehu.  loop−  then  depth 0 21 within unless  " ..." e$.  then  '>' eemit ;
+  espace i 1− pick ehu.  loop−  then  depth 0 21 within unless  " ..." $..  then  '>' eemit ;
 ( Aborts with a message "not implemented". )
 : ... ( -- )  ecr "Hit a piece of unimplemented code!"!  abort ;
 

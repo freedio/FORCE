@@ -65,7 +65,7 @@ variable LOC                      ( Location of copied code for relocations )
 : copyRelocations ( &code # &r -- )  2pick referentVocabulary dup assertDependency
   #vocabulary@ §RELT @#segment@# RELOCATION# u/ 0 do  dup REL.SOURCE + @
   stripReferent 4pick 4pick &within if  dup REL.SOURCE + @ referentOffset 4pick referentOffset −
-    2pick swap &+ over REL.SOURCE + @ swap referentOffset! over REL.TARGET + @ swap splitReferent 1000.s reloc,  then  RELOCATION# + loop  4drop ;
+    2pick swap &+ over REL.SOURCE + @ swap referentOffset! over REL.TARGET + @ swap splitReferent reloc,  then  RELOCATION# + loop  4drop ;
 ( Checks if the last contribution was a linker. )
 : linker? ( -- ? )  LINKER @ ;
 ( Sets the LINKER variable if word &w is a linker. )
@@ -74,11 +74,11 @@ variable LOC                      ( Location of copied code for relocations )
   if so, the length of the previous code is shortened by the linker size, and the pair a:u is
   advanced by the RAX PUSH code. )
 : ?joiner ( &w a u -- &w a' u' )  2pick &@ FLAG.JOINER bit@ if
-    2pick Code# 0≠if  linker? if  LINKERTAIL# unallot  JOINERHEAD# +>  then  then  then ;
+    2pick Code# 0≠if  linker? if  LINKERTAIL# unallot  JOINERHEAD# +>  LOC 2-!  then  then  then ;
 ( Appends the net code of word &w with net size u to the current word.  Also copies relocations and
   generates debug information for it.  Joiners [∢ FLAG.JOINER] are treated specially. )
 : copyCode ( &w -- )
-  &here >r dup code@# ?joiner #,  ?linker  dup word>netcode swap Code# r> copyRelocations ;
+  &here LOC ! dup code@# ?joiner #,  ?linker  dup word>netcode swap Code# LOC @ 4711.s copyRelocations ;
 ( Compiles word &w inline.  If the code fragment is small enough, it is copied, along with its
   relocations and debug info, otherwise a call is inserted. )
 : punchInline ( &w -- )  deferred? if  callCode exit  then
