@@ -254,11 +254,11 @@ vocabulary Clauses
 === String Clauses ===
 
 ( Formats string template literal _$ fitted with # arguments ... )
-: _$| ( ... # _$ -- ShortString:s )  compileString  "format" getDirectI/OTargetWord  compileTarget ;
+: _$| ( ... # _$ -- ShortString:s )  compileString2  "format" getDirectI/OTargetWord  compileTarget ;
 ( Prints string template literal _$ fitted with # arguments ... to stdout. )
 : _$|. ( ... # _$ -- )  _$|  "$." getDirectI/OTargetWord  compileTarget ;
 ( Prints short string _$ with error style on a new line to stderr. )
-: _$! ( _$ -- )  compileString  "!$." getDirectI/OTargetWord  compileTarget ;
+: _$! ( _$ -- )  compileString2  "!$." getDirectI/OTargetWord  compileTarget ;
 ( Formats string template literal _$ fitted with # arguments ... with error style on a new line. )
 : _$|! ( ... # _$ -- )  _$|  "!$." getDirectI/OTargetWord  compileTarget ;
 ( Prints short string _$ with error style on a new line and aborts the process. )

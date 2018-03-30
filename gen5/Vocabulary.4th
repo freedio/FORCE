@@ -6,6 +6,7 @@ vocabulary Vocabulary
   requires" OS.voc"
   requires" Char.voc"
   requires" StringFormat.voc"
+  requires" LogLevel.voc"
   requires" Memory.voc"
   requires" Heap.voc"
   requires" Referent.voc"
@@ -236,7 +237,8 @@ variable FIELD-FLAGS              ( Visibility of fields )
 : #words ( -- # )  §TEXT #segment@ TEXT.#WORDS + w@ ;
 
 ( Executes target word with referent &w. )
-: executeTarget ( &w -- )  word>code &@ exeqt ;
+: executeTarget ( &w -- )
+  word>code &@ debug? if  dup cr 1 "Executing code at address %016x."|log  then  exeqt ;
 
 ( Checks if the build failed, i.e. if the vocabulary has build errors. )
 : buildFailed? ( -- ? )  §TEXT #segment@ TEXT.VOCFLAGS + VOC%ERRORS bit@ ;

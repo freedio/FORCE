@@ -24,7 +24,10 @@ private static section --- Interna --------------------------------
 
 public static section --- API -------------------------------------
 
-/* *** fnz and other "string" parameters ending in -z expect a trailing zero byte and no length. */
+/*   fnz and other "string" parameters ending in -z expect a trailing zero byte and no length.   */
+
+defer out.
+defer err.
 
 ( Reads u₁ bytes from file descriptor #f into buffer a, returning actual number of bytes read u₂. )
 : read ( #f a u₁ -- u₂ t | #e f )  LINUX.READ LINUX-CALL-3,  RESULT, ;
@@ -42,16 +45,16 @@ public static section --- API -------------------------------------
 : pgmbreak ( a|0 -- a' t | #e f )  LINUX.BRK LINUX-CALL-1,  RESULT, ;
 
 ( Terminates the program with exit code n.  Does not return. )
-: terminate ( n -- )  LINUX.EXIT LINUX-CALL-1, ;
+: terminate ( n -- )  "\n" out. LINUX.EXIT LINUX-CALL-1, ;
 ( Terminates the program successfully. )
 : bye ( -- )  0 terminate ;
 
 === Simple Outputs ===
 
 ( Prints a$ to stdout. )
-: out. ( a$ -- )  1 swap count write  2drop ;
+private : _out. ( a$ -- )  1 swap count write  2drop ; fulfills out.
 ( Prints a$ to stderr. )
-: err. ( a$ -- )  2 swap count write  2drop ;
+private : _err. ( a$ -- )  2 swap count write  2drop ; fulfills err.
 
 vocabulary;
 export Linux

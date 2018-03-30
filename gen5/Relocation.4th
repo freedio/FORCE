@@ -22,6 +22,7 @@ cell+ constant RELOCATION#        ( Size of a relocation entry )
 02 constant REL.ABS16             ( Absolute 16-bit relocation )
 09 constant REL.REL32             ( Relative 32-bit relocation.  Source referent points at addr. )
 10 constant REL.REL16             ( Relative 16-bit relocation.  Source referent points at addr. )
+08 constant %RELATIVE             ( Bit mask for relative relocations. )
 
 ( Creates a relocation entry with target &t, source &s, and type tp, returning a referent to
   relocation entry &rel. )
@@ -56,10 +57,11 @@ cell+ constant RELOCATION#        ( Size of a relocation entry )
   dup applyRelocation  RELOCATION# + loop  drop ;
 
 ( For all entries of the relocation table with a target referent of &2, replace the target referent
-  with &1 and re-apply the relocation. )
-: updateRelocations ( &1 &2 -- )  §RELT #segment@# RELOCATION# u/ 0 do
-  dup REL.TARGET + @  2pick = if  2pick over REL.TARGET + !  dup applyRelocation  then
-  RELOCATION# + loop  3drop ;
+  with &1 [or &1 word>code if the relocation is relative] and re-apply the relocation. )
+: updateRelocations ( &1 &2 -- )  over word>code >r  §RELT #segment@# RELOCATION# u/ 0 do
+  dup REL.TARGET + @  2pick = if  dup REL.SOURCE + @ referentExtra %RELATIVE and if
+    j  else  2pick  then  over REL.TARGET + !  dup applyRelocation  then
+  RELOCATION# + loop  r> 4drop ;
 ( Fulfills deferred word with symbol name s$ with implementation &w. )
 : fulfill ( &w s$ -- )  findSymbol unless  1 "Symbol «%s» not found!"|! abort  then
   2dup SYM.VALUE + xchg drop nip  updateRelocations ;

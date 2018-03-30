@@ -24,8 +24,10 @@ vocabulary Compiler
 : compileChar ( uc -- )  CHAR, ;
 ( Compiles a "load float" instruction for float r. )
 : compileFloat ( -- :F: r -- )  "(loadFloat)" callTarget 8 allot@ f! ;
-( Compiles a "load string" instruction for string a$. )
+( Compiles a "load string" instruction for quoted string a$. )
 : compileString ( a$ -- )  STRING,  "$",  STREND, ;
+( Compiles a "load string" instruction for unquoted string a$. )
+: compileString2 ( a$ -- )  STRING,  $,  STREND, ;
 ( Compiles int clause &w with value x. )
 : compileIntClause ( x &w -- ) "Don't know how to compile a target int clause!"abort ;
 ( Compiles char clause &w with value x. )
@@ -78,7 +80,7 @@ variable LOC                      ( Location of copied code for relocations )
 ( Appends the net code of word &w with net size u to the current word.  Also copies relocations and
   generates debug information for it.  Joiners [∢ FLAG.JOINER] are treated specially. )
 : copyCode ( &w -- )
-  &here LOC ! dup code@# ?joiner #,  ?linker  dup word>netcode swap Code# LOC @ 4711.s copyRelocations ;
+  &here LOC ! dup code@# ?joiner #,  ?linker  dup word>netcode swap Code# LOC @ copyRelocations ;
 ( Compiles word &w inline.  If the code fragment is small enough, it is copied, along with its
   relocations and debug info, otherwise a call is inserted. )
 : punchInline ( &w -- )  deferred? if  callCode exit  then
