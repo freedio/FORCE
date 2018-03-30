@@ -189,7 +189,7 @@ public static section --- API
 
 ( Initializes the vocabulary from initialization structure at address @initstr when loading. )
 private init : init ( @initstr -- @initstr )
-  0 pgmbreak unless  >errmsg 1 "Fatal error while initializing Linux memory: %s"abort  then
+  1000.s 0 pgmbreak unless  >errmsg 1 "Fatal error while initializing Linux memory: %s"abort  then
   ProgramBreak!  allocatePage0 PageArray!  allocatePage0 ObjectSpace! ProgramBreak@ InitialBreak! ;
 
 vocabulary;

@@ -767,7 +767,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : UDO,  RAX RCX MOV  RDX POP  RAX POP  RCX RDX CMP  U> IF
   16 [RBP] RBP LEA  RCX -16 [RBP] MOV  RDX -8 [RBP] MOV  BEGIN  nolink ;
 : DODOWN,  RAX RCX MOV  RDX POP  RAX POP  RDX RCX CMP  > IF
-  16 [RBP] RBP LEA  RCX -16 [RBP] MOV  RDX -8 [RBP] MOV  BEGIN  nolink ;
+  16 [RBP] RBP LEA  RDX -16 [RBP] MOV  RCX -8 [RBP] MOV  BEGIN  nolink ;
 : LOOP,  QWORD PTR -CELL [RBP] INC  LOOPPARA,  RCX RDX CMP  = UNTIL  2RDROP,  THEN  nolink ;
 : LOOPDOWN,  QWORD PTR -CELL [RBP] DEC  LOOPPARA,  RCX RDX CMP  = UNTIL  2RDROP,  THEN  nolink ;
 
@@ -801,13 +801,13 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : ISABOVE, ( u1 u2 -- u1>u2 )  RDX POP  RAX RDX CMP  AL U> ?SET  AL NEG  AL RAX MOVSX  nolink ;
 : ISNOTABOVE, ( u1 u2 -- u1≤u2 )  RDX POP  RAX RDX CMP  AL U≤ ?SET  AL NEG  AL RAX MOVSX  nolink ;
 : ISWITHIN, ( n1 n2 n3 -- n2≤n1<n3 )  RDX POP  RCX POP  RAX RSI MOV  RAX RAX XOR
-  RDX RSI CMP  ≤ IF  RCX RSI CMP  > IF  RAX DEC  THEN  THEN  nolink ;
+  RCX RDX CMP  ≤ IF  RCX RSI CMP  > IF  RAX DEC  THEN  THEN  nolink ;
 : ISBETWEEN, ( u1 u2 u3 -- u2≤u1<u3 )  RDX POP  RCX POP  RAX RSI MOV  RAX RAX XOR
   RDX RSI CMP  U≤ IF  RCX RSI CMP  U> IF  RAX DEC  THEN  THEN  nolink ;
 
-: ?DUP, ( x -- [x] x )  RAX RAX TEST  0= UNLESS  RAX PUSH  THEN ;
-: DUPIF, ( x -- [x] x )  RAX RAX TEST  0= UNLESS  RAX PUSH  nolink ;
-: DUPUNLESS, ( x -- [x] x )  RAX RAX TEST  0= UNLESS  RAX PUSH  ELSE  nolink ;
+: ?DUP, ( x -- [x] x )  RAX RAX TEST  0= IF  RAX POP  THEN  nolink ;
+: DUPIF, ( x -- [x] x )  RAX RAX TEST  0= IF  RAX POP  ELSE  nolink ;
+: DUPUNLESS, ( x -- [x] x )  RAX RAX TEST  0= IF  RAX POP  nolink ;
 
 === Conditional Terms ===
 
