@@ -41,8 +41,10 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 
 ( Inserts a call to code referent &c. )
 : REFCALL, ( &c -- )  &# CALL  nolink ;
+( Inserts a call to code at address a. )
+: EXECUTE, ( a -- )  RAX RDX MOV  RAX POP  RDX CALL  nolink ;
 ( Inserts a call to the code of the word whose address is on the parameter stack. )
-: EXECUTE, ( &w -- )
+: EXECUTEWORD, ( @w -- )
   RAX RDX MOV  BYTE PTR 4 [RDX] RAX MOVZX  7 [RDX] [RAX] RDX LEA  RAX POP  RDX CALL  nolink ;
 ( Inserts the ENTER code. )
 : ENTER, ( -- )  CELL [RBP] RBP LEA  -CELL [RBP] POP  ENTER+  nolink ;
@@ -538,20 +540,20 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 === Storage Arithmetics ===
 
 ( Adds c to byte at address a. )
-: CADD, ( c a -- )  RDX POP  BL 0 [RAX] ADD  DROP, ;
+: CADD, ( c a -- )  RDX POP  DL 0 [RAX] ADD  DROP, ;
 ( Adds w to word at address a. )
-: WADD, ( w a -- )  RDX POP  BX 0 [RAX] ADD  DROP, ;
+: WADD, ( w a -- )  RDX POP  DX 0 [RAX] ADD  DROP, ;
 ( Adds d to double-word at address a. )
-: DADD, ( w a -- )  RDX POP  EBX 0 [RAX] ADD  DROP, ;
+: DADD, ( w a -- )  RDX POP  EDX 0 [RAX] ADD  DROP, ;
 ( Adds q to quad-word at address a. )
 : QADD, ( q a -- )  RDX POP  RDX 0 [RAX] ADD  DROP, ;
 
 ( Subtracts c from byte at address a. )
-: CSUB, ( c a -- )  RDX POP  BL 0 [RAX] SUB  DROP, ;
+: CSUB, ( c a -- )  RDX POP  DL 0 [RAX] SUB  DROP, ;
 ( Subtracts w from word at address a. )
-: WSUB, ( w a -- )  RDX POP  BX 0 [RAX] SUB  DROP, ;
+: WSUB, ( w a -- )  RDX POP  DX 0 [RAX] SUB  DROP, ;
 ( Subtracts d from double-word at address a. )
-: DSUB, ( w a -- )  RDX POP  EBX 0 [RAX] SUB  DROP, ;
+: DSUB, ( w a -- )  RDX POP  EDX 0 [RAX] SUB  DROP, ;
 ( Subtracts q from quad-word at address a. )
 : QSUB, ( q a -- )  RDX POP  RDX 0 [RAX] SUB  DROP, ;
 
@@ -559,31 +561,34 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 
 ( Tests if bit # is set in memory starting at address a. )
 : BTSTAT, ( a # -- ? )
-  RAX RCX MOV  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BT  RAX RAX SBB  nolink ;
+  RAX RCX MOV  7 # RCX AND  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BT  RAX RAX SBB  nolink ;
 ( Sets bit # in memory starting at address a. )
-: BSETAT, ( a # -- )  RAX RCX MOV  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BTS  DROP, ;
+: BSETAT, ( a # -- )
+  RAX RCX MOV  7 # RCX AND  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BTS  DROP, ;
 ( Clears bit # in memory starting at address a. )
-: BCLRAT, ( a # -- )  RAX RCX MOV  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BTR  DROP, ;
+: BCLRAT, ( a # -- )
+  RAX RCX MOV  7 # RCX AND  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BTR  DROP, ;
 ( Flips bit # in memory starting at address a. )
-: BCHGAT, ( a # -- )  RAX RCX MOV  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BTC  DROP, ;
+: BCHGAT, ( a # -- )
+  RAX RCX MOV  7 # RCX AND  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BTC  DROP, ;
 ( Tests bit # in memory starting at address a, then sets it.  This operation is not atomic. )
 : BTSTSETAT, ( a # -- ? )
-  RAX RCX MOV  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BTS  RAX RAX SBB  nolink ;
+  RAX RCX MOV  7 # RCX AND  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BTS  RAX RAX SBB  nolink ;
 ( Tests bit # in memory starting at address a, then clears it.  This operation is not atomic. )
 : BTSTCLRAT, ( a # -- ? )
-  RAX RCX MOV  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BTR  RAX RAX SBB  nolink ;
+  RAX RCX MOV  7 # RCX AND  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BTR  RAX RAX SBB  nolink ;
 ( Tests bit # in memory starting at address a, then flips it.  This operation is not atomic. )
 : BTSTCHGAT, ( a # -- ? )
-  RAX RCX MOV  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BTC  RAX RAX SBB  nolink ;
+  RAX RCX MOV  7 # RCX AND  %CELL # RAX SHR  RDX POP  RCX 0 [RDX] [RAX] BTC  RAX RAX SBB  nolink ;
 ( Atomically tests bit # in memory starting at address a and sets it. )
-: ABTSTSETAT, ( a # -- ? )
-  RAX RCX MOV  %CELL # RAX SHR  RDX POP  LOCK  RCX 0 [RDX] [RAX] BTS  RAX RAX SBB  nolink ;
+: ABTSTSETAT, ( a # -- ? )  RAX RCX MOV  7 # RCX AND  %CELL # RAX SHR  RDX POP
+  LOCK  RCX 0 [RDX] [RAX] BTS  RAX RAX SBB  nolink ;
 ( Atomically tests bit # in memory starting at address a and clears it. )
-: ABTSTCLRAT, ( a # -- ? )
-  RAX RCX MOV  %CELL # RAX SHR  RDX POP  LOCK  RCX 0 [RDX] [RAX] BTR  RAX RAX SBB  nolink ;
+: ABTSTCLRAT, ( a # -- ? )  RAX RCX MOV  7 # RCX AND  %CELL # RAX SHR  RDX POP
+  LOCK  RCX 0 [RDX] [RAX] BTR  RAX RAX SBB  nolink ;
 ( Atomically tests bit # in memory starting at address a and flips it. )
-: ABTSTCHGAT, ( a # -- ? )
-  RAX RCX MOV  %CELL # RAX SHR  RDX POP  LOCK  RCX 0 [RDX] [RAX] BTC  RAX RAX SBB  nolink ;
+: ABTSTCHGAT, ( a # -- ? )  RAX RCX MOV  7 # RCX AND  %CELL # RAX SHR  RDX POP
+  LOCK  RCX 0 [RDX] [RAX] BTC  RAX RAX SBB  nolink ;
 
 === Assertions ===
 
@@ -722,19 +727,32 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 ( Looks up c in byte buffer of length # at address a.  Returns 0 if not found, otherwise the 1-based
   index of the location u of the occurrence. )
 : CFIND, ( a # c -- u )  RCX POP  RCX RDX MOV  0 [RSP] RDI XCHG  CLD  REPNE BYTE PTR SCAS
-  = UNLESS  RDX RCX MOV  THEN  RCX RDX SUB  RDX RAX MOV  nolink ;
+  = UNLESS  RDX RCX MOV  THEN  RCX RDX SUB  RDI POP  RDX RAX MOV  nolink ;
 ( Looks up w in word buffer of length # at address a.  Returns 0 if not found, otherwise the 1-based
   index of the location u of the occurrence. )
 : WFIND, ( a # w -- u )  RCX POP  RCX RDX MOV  0 [RSP] RDI XCHG  CLD  REPNE WORD PTR SCAS
-  = UNLESS  RDX RCX MOV  THEN  RCX RDX SUB  RDX RAX MOV  nolink ;
+  = UNLESS  RDX RCX MOV  THEN  RCX RDX SUB  RDI POP  RDX RAX MOV  nolink ;
 ( Looks up d in double-word buffer of length # at address a.  Returns 0 if not found, otherwise the
   1-based index of the location u of the occurrence. )
 : DFIND, ( a # d -- u )  RCX POP  RCX RDX MOV  0 [RSP] RDI XCHG  CLD  REPNE DWORD PTR SCAS
-  = UNLESS  RDX RCX MOV  THEN  RCX RDX SUB  RDX RAX MOV  nolink ;
+  = UNLESS  RDX RCX MOV  THEN  RCX RDX SUB  RDI POP  RDX RAX MOV  nolink ;
 ( Looks up q in quad-word buffer of length # at address a.  Returns 0 if not found, otherwise the
   1-based index of the location u of the occurrence. )
 : QFIND, ( a # q -- u )  RCX POP  RCX RDX MOV  0 [RSP] RDI XCHG  CLD  REPNE QWORD PTR SCAS
-  = UNLESS  RDX RCX MOV  THEN  RCX RDX SUB  RDX RAX MOV  nolink ;
+  = UNLESS  RDX RCX MOV  THEN  RCX RDX SUB  RDI POP  RDX RAX MOV  nolink ;
+
+( Moves # bytes from source address sa to target address ta. )
+: CMOVE, ( sa ta # -- )  RAX RCX MOV  RDI 0 [RSP] XCHG  RSI CELL [RSP] XCHG  REP BYTE PTR MOVS
+  RDI POP  RSI POP  DROP, ;
+( Moves # words from source address sa to target address ta. )
+: WMOVE, ( sa ta # -- )  RAX RCX MOV  RDI 0 [RSP] XCHG  RSI CELL [RSP] XCHG  REP WORD PTR MOVS
+  RDI POP  RSI POP  DROP, ;
+( Moves # double-words from source address sa to target address ta. )
+: DMOVE, ( sa ta # -- )  RAX RCX MOV  RDI 0 [RSP] XCHG  RSI CELL [RSP] XCHG  REP DWORD PTR MOVS
+  RDI POP  RSI POP  DROP, ;
+( Moves # quad-words from source address sa to target address ta. )
+: QMOVE, ( sa ta # -- )  RAX RCX MOV  RDI 0 [RSP] XCHG  RSI CELL [RSP] XCHG  REP QWORD PTR MOVS
+  RDI POP  RSI POP  DROP, ;
 
 === Short String Operations ===
 
@@ -743,6 +761,10 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 ( Appends unsigned byte c to counted string in buffer at a$. )
 : CAPPEND$, ( c a$ -- )
   BYTE PTR 0 [RAX] INC  BYTE PTR 0 [RAX] RCX MOVZX  RDX POP  DL 0 [RAX] [RCX] MOV  DROP, ;
+( Appends b$ to a$. )
+: APPEND$, ( a$ b$ -- a$ )  RSI PUSH  CELL [RSP] RDI XCHG  RDI RAX MOV  BYTE PTR 0 [RDI] RDX MOVZX
+  1 [RDI] [RDX] RDI LEA  BYTE PTR 0 [RSI] RCX MOV  RSI INC  CL 0 [RDI] ADD   REP BYTE PTR MOVS
+  RSI POP  RDI POP ;
 
 === UTF8 ===
 
@@ -759,7 +781,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : END,  END  nolink ;
 : AGAIN,  AGAIN  nolink ;
 : UNTIL,  RAX RAX TEST  RAX POP  0- UNTIL  nolink ;
-: ASLONG,  RAX RAX TEST  RAX POP  0- ASLONG  nolink ;
+: ASLONG,  RAX RAX TEST  RAX POP  0= UNTIL  nolink ;
 : WHILE,  RAX RAX TEST  RAX POP  0- WHILE  nolink ;
 : REPEAT,  REPEAT  nolink ;
 : DO,  RAX RCX MOV  RDX POP  RAX POP  RCX RDX CMP  > IF
@@ -805,7 +827,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : ISBETWEEN, ( u1 u2 u3 -- u2≤u1<u3 )  RDX POP  RCX POP  RAX RSI MOV  RAX RAX XOR
   RDX RSI CMP  U≤ IF  RCX RSI CMP  U> IF  RAX DEC  THEN  THEN  nolink ;
 
-: ?DUP, ( x -- [x] x )  RAX RAX TEST  0= IF  RAX POP  THEN  nolink ;
+: ?DUP, ( x -- [x] x )  RAX RAX TEST  0= UNLESS  RAX PUSH  THEN  nolink ;
 : DUPIF, ( x -- [x] x )  RAX RAX TEST  0= IF  RAX POP  ELSE  nolink ;
 : DUPUNLESS, ( x -- [x] x )  RAX RAX TEST  0= IF  RAX POP  nolink ;
 
@@ -888,6 +910,14 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : UNTILZERO, ( x -- )  RAX RAX TEST  RAX POP  0= UNTIL  nolink ;
 : DUPUNTILZERO, ( x -- x )  RAX RAX TEST  0= UNTIL  nolink ;
 
+: BITIF, ( u # -- )  RDX POP  RAX RDX BT  RAX POP  CY IF ;
+: BITATIF, ( a # -- )
+  RDX POP  RAX RCX MOV  64 # RCX SHR  RAX 0 [RDX] [RCX] *CELL BT  RAX POP  CY IF ;
+
+: DUPBITIF, ( u # -- )  RDX POP  RAX RDX BT  RDX RAX MOV  CY IF ;
+: DUPBITATIF, ( a # -- )
+  RDX POP  RAX RCX MOV  64 # RCX SHR  RAX 0 [RDX] [RCX] *CELL BT  RDX RAX MOV  CY IF ;
+
 --- Unlikely ---
 
 : IFEVERZERO, ( x -- )  RAX RAX TEST  RAX POP  0= IFEVER  nolink ;
@@ -925,5 +955,12 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : DUPIFEVERNOTBELOW, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  U< UNLESSEVER  nolink ;
 : DUPIFEVERABOVE, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  U> IFEVER  nolink ;
 : DUPIFEVERNOTABOVE, ( x₁ x₂ -- )  RDX POP  RAX RDX CMP  U> UNLESSEVER  nolink ;
+
+: BITIFEVER, ( u # -- )  RDX POP  RAX RDX BT  RAX POP  CY IFEVER ;
+: BITATIFEVER, ( a # -- )
+  RDX POP  RAX RCX MOV  7 # RCX AND  3 # RAX SHR  RCX 0 [RDX] [RAX] BT  RAX POP  CY IFEVER ;
+: DUPBITIFEVER, ( u # -- )  RDX POP  RAX RDX BT  RDX RAX MOV  CY IFEVER ;
+: DUPBITATIFEVER, ( a # -- )
+  RDX POP  RAX RCX MOV  7 # RCX AND  3 # RCX SHR  RCX 0 [RDX] [RAX] BT  RDX RAX MOV  CY IFEVER ;
 
 vocabulary;

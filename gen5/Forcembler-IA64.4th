@@ -825,7 +825,7 @@ decimal
 : (END) ( [a] -- )  A> drop  cleanup ;
 : (AGAIN) ( [a] -- )  A> JMPBCK cleanup ;
 : (UNTIL) ( cond [a] -- )  1 !args !condition $FF and 1 xor A> ?JMPBCK  cleanup ;
-: (ASLONG) ( cond [a] -- )  1 !args !condition $FF and A> swap ?JMPBCK  cleanup ;
+: (ASLONG) ( cond [a] -- )  1 !args !condition $FF and A> ?JMPBCK  cleanup ;
 : (IF) ( cond -- [a] )  1 !args !condition $FF and 1 xor ?JMPFWD >A  cleanup ;
 : (THEN) ( [a] -- )  A> resolve  cleanup ;
 : (ELSE) ( [a1] -- [a2] )  A> JMPFWD >A resolve  cleanup ;

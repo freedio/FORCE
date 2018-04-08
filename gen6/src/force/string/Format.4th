@@ -116,14 +116,19 @@ package force/string/
 import force/lang/Forth
 import force/inout/DirectIO
 import force/debug/Debug
+import force/lang/Xstack
+import force/convert/Char
+import my/OS
+import my/Locale
 
 vocabulary Format
 
 private static section --- Utils and State
 
 create NumBuffer  128 allot       ( Buffer for numeric argument conversion. )
+create @NumBuffer                 ( Right edge of numeric buffer. )
 
-  cell variable Char              ( Buffer for a Unicode character. )
+  cell variable CharBuffer        ( Buffer for a Unicode character. )
   cell variable Digits            ( Number of digits in numeric conversion. )
   cell variable NextArg           ( Index of the next argument. )
 udword variable Control           ( Collected flags. )
@@ -131,18 +136,21 @@ udword variable Control           ( Collected flags. )
  ubyte variable Precision         ( Parsed field precision. )
  ubyte variable #Args             ( Number of arguments to process. )
  ubyte variable Arg#              ( Index of the argument to use. )
- ubyte variable PadChar           ( ASCII character to pad the field with. )
 
  0 constant .LeftAlign            ( true if field is left-aligned. )
  1 constant .Alternate            ( true if alternate form requested. )
  2 constant .ForceSign            ( true if sign is forced even when positive. )
- 3 constant .DoPadding            ( true if buffer is padded with PadChar. )
- 4 constant .GroupNums            ( true if numbers should include the group separator. )
- 5 constant .Parenthes            ( true if minus sign is replaced with parentheses. )
- 6 constant .?Negative            ( true if the current number is negative. )
- 7 constant .?ReuseArg            ( true if last argument should be re-used. )
+ 3 constant .LeadSpace            ( true if a leading space on non-negative numbers is required. )
+ 4 constant .PadZeroes            ( true if buffer is padded with zeroes. )
+ 5 constant .PadPeriod            ( true if buffer is padded with periods. )
+ 6 constant .PadAsters            ( true if buffer is padded with asterisks. )
+ 7 constant .PadScores            ( true if buffer is padded with underscore. )
+ 8 constant .GroupNums            ( true if numbers should include the group separator. )
+ 9 constant .Parenthes            ( true if minus sign is replaced with parentheses. )
+10 constant .?ReuseArg            ( true if last argument should be re-used. )
 
-10 constant .Uppercase            ( true if letters should be converted to upper case. )
+16 constant .?Negative            ( true if the current number is negative. )
+18 constant .Uppercase            ( true if letters should be converted to upper case. )
 
 --- Methods ---
 
@@ -159,33 +167,78 @@ udword variable Control           ( Collected flags. )
 : parseArg# ( a # -- a' #' )  begin dup while
   over c@ dup '0' ':' within unless  drop exit  then  '0' − Arg# 10c*+!  1+>  repeat ;
 
+( Prepares rendering area at address a. )
+: prepare ( -- a :X: a -- a )  x@ count + dup Width@ ␣
+  Control .PadZeroes bit@ifever  drop '0'  then
+  Control .PadAsters bit@ifever  drop '*'  then
+  Control .PadScores bit@ifever  drop '_'  then
+  Control .PadPeriod bit@ifever  drop '.'  then
+  cfill ;
+( Limits amount of characters # to insert. )
+: limit$ ( a # -- a #' )  Precision@ ?dupif  min  then ;
+( Aligns string sa with length # in rendering area ta. )
+: align$ ( sa # ta -- sa # ta' )  Width@ 2pick − 0 max Control .LeftAlign bit@ andn + ;
+( Inserts short string a$ to rendering area at a. )
+: insert$ ( a$ -- :X: a -- a )
+  count limit$ dup Width@ 10.s max 20.s >r prepare align$ swap cmove  r> x@ 40.s c+! ;
+( Inserts short string a$, converted to uppercase, to rendering area at a. )
+: INSERT$ ( a$ -- :X: a -- a )
+  count limit$ dup Width@ max >r prepare align$ swap 0 do  over c@ >upper !c++ nxt  loop
+  2drop r> x@ c+! ;
+
+: ?+hexoffset ( n -- n' )  9u>?if  $27+  Control .Uppercase bit@ $20 and −  then ;
+( Appends unsigned number u in radix r to rendering area at a. )
+: >unsigned ( u r -- :X: a -- a )  >r  4 Control .GroupNums bit@ and 1− Digits!
+  @NumBuffer tuck  begin  swap r@ u÷% ?+hexoffset '0'+ rot
+  Digits 1@−! 0=if  mantissaGroupChar@ --!c  2 Digits!  then  --c! over aslong
+  nip tuck − swap --c!  r> drop insert$ ;
+( Appends signed number n in radix r to rendering area at a. )
+: >signed ( n r -- :X: a -- a )  >r  4 Control .GroupNums bit@ and 1− Digits!  @NumBuffer tuck  swap
+  0<?if  abs Control dup .?Negative bit+! .Parenthes bit@ifever  ')' rot --c! swap  then  then  swap
+  begin  swap r@ u÷% ?+hexoffset '0'+ rot  Digits 1@−!
+  0=ifever  mantissaGroupChar@ --!c  2 Digits! then  --c! over aslong  nip
+  Control .?Negative bit@ifever  '-' Control .Parenthes bit@ 5and − swap --c!  else
+    Control .ForceSign bit@ifever  '+' swap --c!  else  Control .LeadSpace bit@ifever  ␣ swap --c!
+    then  then  then
+  tuck − swap --c!  r> drop insert$ ;
+
+: >on/off ( ... a # -- ... a # )  Arg# pick if  "on"  else  "off"  then  insert$  ;
+: >ON/OFF ( ... a # -- ... a # )  Arg# pick if  "ON"  else  "OFF"  then  insert$  ;
+: >yes/no ( ... a # -- ... a # )  Arg# pick if  "yes"  else  "no"  then  insert$  ;
+: >YES/NO ( ... a # -- ... a # )  Arg# pick if  "YES"  else  "NO"  then  insert$  ;
+
+( Returns index # of the next argument. )
+: nextArg ( -- # )  Arg#@ ?dupunless  NextArg dup @ swap 1+!  then ;
 
 --- Rules ---
 
 ( Formats a boolean parameter as lowercase. )
-: >bool ( ... a # -- ... a # )  ... ;
+: >bool ( ... a # -- ... a # )
+  Control .Alternate bit@ifever >yes/no  else  Control .PadZeroes bit@ifever  >on/off  else
+    nextArg pick if  "true"  else  "false"  then  insert$  then  then ;
 ( Formats a boolean parameter as UPPERCASE. )
-: >BOOL ( ... a # -- ... a # )  ... ;
+: >BOOL ( ... a # -- ... a # )
+  Control .Alternate bit@ifever >YES/NO  else  Control .PadZeroes bit@ifever  >ON/OFF  else
+    nextArg pick if  "TRUE"  else  "FALSE"  then  insert$  then  then ;
 ( Formats a string parameter as lowercase. )
-: >string ( ... a # -- ... a # )  ... ;
+: >string ( ... a # -- ... a # )  nextArg pick insert$ ;
 ( Formats a string parameter as UPPERCASE. )
-: >STRING ( ... a # -- ... a # )  ... ;
+: >STRING ( ... a # -- ... a # )  nextArg pick INSERT$ ;
 ( Formats a char parameter as lowercase. )
-: >char ( ... a # -- ... a # )  ... ;
+: >char ( ... a # -- ... a # )  nextArg pick 8u<< 1+ CharBuffer tuck !  insert$ ;
 ( Formats a char parameter as UPPERCASE. )
-: >CHAR ( ... a # -- ... a # )  ... ;
+: >CHAR ( ... a # -- ... a # )  nextArg pick 8u<< 1+ CharBuffer tuck !  INSERT$ ;
 ( Formats an integer parameter as decimal lowercase. )
-: >decimal ( ... a # -- ... a # )  ... ;
-( Formats an integer parameter as decimal UPPERCASE. )
-: >DECIMAL ( ... a # -- ... a # )  ... ;
+: >decimal ( ... a # -- ... a # )
+  nextArg pick  10 Control .Alternate bit@ifever  >unsigned  else  >signed  then ;  alias >DECIMAL
 ( Formats an integer parameter as octal lowercase. )
-: >octal ( ... a # -- ... a # )  ... ;
-( Formats an integer parameter as octal UPPERCASE. )
-: >OCTAL ( ... a # -- ... a # )  ... ;
+: >octal ( ... a # -- ... a # )
+  nextArg pick  8 Control .Alternate bit@ifever  >unsigned  else  >signed  then ;  alias >OCTAL
 ( Formats an integer parameter as hexadecimal lowercase. )
-: >hexadec ( ... a # -- ... a # )  ... ;
+: >hexadec ( ... a # -- ... a # )
+  nextArg pick  10 Control .Alternate bit@ifever  >unsigned  else  >signed  then ;
 ( Formats an integer parameter as hexadecimal UPPERCASE. )
-: >HEXADEC ( ... a # -- ... a # )  ... ;
+: >HEXADEC ( ... a # -- ... a # )  Control .Uppercase bit+!  >hexadec ;
 ( Formats a FPU parameter as exponential lowercase. )
 : >expon ( ... a # -- ... a # )  ... ;
 ( Formats a FPU parameter as exponential UPPERCASE. )
@@ -203,11 +256,11 @@ udword variable Control           ( Collected flags. )
 ( Formats a timedate parameter as date/time UPPERCASE. )
 : >TIME ( ... a # -- ... a # )  ... ;
 ( Formats an integer parameter as percentage. )
-: >percent ( ... a # -- ... a # )  ... ;
+: >percent ( ... a # -- ... a # )  '%' usize swap 8u<< + CharBuffer tuck !  insert$ ;
 ( Formats an integer parameter as permillage. )
-: >permille ( ... a # -- ... a # )  ... ;
+: >permille ( ... a # -- ... a # )  '‰' usize swap 8u<< + CharBuffer tuck !  insert$ ;
 ( Inserts a platfor-specific newline sequence. )
-: >newline ( ... a # -- ... a # )  ... ;
+: >newline ( ... a # -- ... a # )  cNEWLINE usize swap 8u<< + CharBuffer tuck !  insert$ ;
 
 create Rules                      ( The list of rules. )
   ' >bool ', ' >BOOL ',           ( b and B )
@@ -231,16 +284,16 @@ create Rules                      ( The list of rules. )
   Control .?ReuseArg bit@− if  NextArg@ 1− 0 max NextArg!  then
   0≠?if  over c@ "bBsScCdDoOxXeEfFgG%‰tTn" count rot cfind ?dupunless
     ecr "\e[1mWarning: Unknown formatting rule '" $.. eemit "' skipped.\e[22m" $..  exit  then
-  >r 1+> Rules r> 1− cells+ @ execute ;
+  >r 1+> Rules r> 1− cells+ @ executeWord ;
 
 public static section --- API
 
 ( Formats template f$ using # arguments ... into buffer b$ with expected size 256. )
-: format$ ( ... # f$ b$ -- )  1000.s dup 256 0 cfill  >r  swap #Args!  2 NextArg!  0 Control!
-  count begin ?dup while
-    r@ c@ 255=if  r> #Args@ 1+ udrop exit  then  ( Buffer overflow protection )
-    over c@ '%'=if  1+> formatArg  else  over c@ r@ count + c!  r@ 1c+!  then  1+> repeat drop
-  r> #Args@ 1+ udrop ;
+: format$ ( ... # f$ b$ -- )  dup >x 256 0 cfill   ( ... # f$ ) swap #Args!  2 NextArg!  0 Control!
+  ( ... f$ ) count begin ?dup while
+    x@ c@ 255=if  x> #Args@ 1+ udrop exit  then  ( Buffer overflow protection )
+    over c@ '%'=if  1+> formatArg  else  over c@ x@ count + c!  x@ 1c+!  1?+>  then  repeat drop
+  x> #Args@ 1+ udrop ;
 
 vocabulary;
 export Format

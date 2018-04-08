@@ -56,5 +56,9 @@ private : _out. ( a$ -- )  1 swap count write  2drop ; fulfills out.
 ( Prints a$ to stderr. )
 private : _err. ( a$ -- )  2 swap count write  2drop ; fulfills err.
 
+=== OS Specifics ===
+
+$0A constant cNEWLINE
+
 vocabulary;
 export Linux

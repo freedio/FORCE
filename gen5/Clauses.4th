@@ -13,16 +13,16 @@ vocabulary Clauses
 
 === Stack Operations ===
 
-: _#pick ( ... _# -- ... x )  1 ADP+  RAX PUSH  1 ADP-  CELLS [RSP] RAX MOV ;
+: _#pick ( ... _# -- ... x )  1 ADP+  RAX PUSH  1 ADP-  CELLS [RSP] RAX MOV  nolink ;
 : _#roll ( ... _# -- ... )  # RCX MOV  RDX RDX XOR
   BEGIN  RCX DEC  0> WHILE  0 [RSP] [RDX] *CELL RAX XCHG  RDX INC  REPEAT  nolink ;
 
 === Stack Arithmetic Clauses ===
 
 ( Adds _n to x. )
-: _#+ ( x _n -- x+_n )  # RAX ADD ;
+: _#+ ( x _n -- x+_n )  # RAX ADD  nolink ;
 ( Subtracts _n from x. )
-: _#− ( x _n -- x+_n )  # RAX SUB ;  alias _#-
+: _#− ( x _n -- x+_n )  # RAX SUB  nolink ;  alias _#-
 ( Multiply n with _n. )
 : _#× ( n _n -- n*_n )
   0=?if  drop  RAX RAX XOR  else
@@ -46,7 +46,7 @@ vocabulary Clauses
   65536=?if  drop  16 # RAX SHL  else
   # RDX MOV  RDX IMUL
   then  then  then  then  then  then  then  then  then  then  then  then  then  then  then  then
-  then  then  then ;  alias _#*
+  then  then  then  nolink ;  alias _#*
 ( Multiply u with _u. )
 : _#u× ( u _u -- u*_u )
   0=?if  drop  RAX RAX XOR  else
@@ -69,7 +69,7 @@ vocabulary Clauses
   65536=?if  drop  16 # RAX SHL  else
   # RDX MOV  RDX MUL
   then  then  then  then  then  then  then  then  then  then  then  then  then  then  then  then
-  then  then ;  alias _#u*
+  then  then  nolink ;  alias _#u*
 ( Divide n through _n. )
 : _#÷ ( n _n -- n*_n )
   0=?if  "Division by zero!"abort  else
@@ -93,7 +93,7 @@ vocabulary Clauses
   65536=?if  drop  16 # RAX SAR  else
   # RCX MOV  CQO  RCX IDIV
   then  then  then  then  then  then  then  then  then  then  then  then  then  then  then  then
-  then  then  then ;  alias _#/
+  then  then  then  nolink ;  alias _#/
 ( Divide u through _u. )
 : _#u÷ ( u _u -- u*_u )
   0=?if  "Division by zero!"abort  else
@@ -116,13 +116,13 @@ vocabulary Clauses
   65536=?if  drop  16 # RAX SHR  else
   # RCX MOV  RDX RDX XOR  RCX DIV
   then  then  then  then  then  then  then  then  then  then  then  then  then  then  then  then
-  then  then ;  alias _#u/
+  then  then  nolink ;  alias _#u/
 ( Returns the rest of the integer division of n through _n. )
 : _#% ( n _n -- n%_n )
   0=?if  "Division by zero!"abort  else
   1=?if  drop  RAX RAX XOR  else
   # RCX MOV  CQO  RCX IDIV  RDX RAX MOV
-  then  then ;  alias _#mod
+  then  then  nolink ;  alias _#mod
 ( Returns the rest of the integer division of u through _u. )
 : _#u% ( n _u -- u%_u )
   0=?if  "Division by zero!"abort  else
@@ -145,38 +145,41 @@ vocabulary Clauses
   65536=?if  drop  65535 # RAX AND  else
   # RCX MOV  RDX RDX XOR  RCX DIV  RDX RAX MOV
   then  then  then  then  then  then  then  then  then  then  then  then  then  then  then  then
-  then  then ;  alias _#umod
+  then  then  nolink ;  alias _#umod
 ( Advances _n positions in the buffer with length # and address a. )
-: _#+> ( a # _n -- a+_n #−_n )  1 ADP+  dup # RAX SUB  1 ADP-  # CELL PTR 0 [RSP] ADD ;
+: _#+> ( a # _n -- a+_n #−_n )  1 ADP+  dup # RAX SUB  1 ADP-  # CELL PTR 0 [RSP] ADD  nolink ;
+( Advances _n positions in the buffer with length # and address a, if _n u≥ #. )
+: _#?+> ( a # _n -- a+_n #−_n )  1 ADP+  dup # RAX CMP  U< UNLESS
+  dup # RAX SUB  1 ADP-  # CELL PTR 0 [RSP] ADD  THEN  nolink ;
 ( Loads _n cells. )
-: _#cells ( _n -- _n*cell# )  1 ADP+  RAX PUSH  1 ADP-  CELL * # RAX MOV ;
+: _#cells ( _n -- _n*cell# )  1 ADP+  RAX PUSH  1 ADP-  CELL * # RAX MOV  nolink ;
 ( Adds _n cells to x. )
-: _#cells+ ( x _n -- x+_n*cell# )  CELL * # RAX ADD ;
+: _#cells+ ( x _n -- x+_n*cell# )  CELL * # RAX ADD  nolink ;
 
 === Stack Logical Clauses ===
 
 ( Conjoins x with _x. )
-: _#and ( x _x -- x' )  # RAX AND ;
+: _#and ( x _x -- x' )  # RAX AND  nolink ;
 ( Bijoins x with _x. )
-: _#or ( x _x -- x' )  # RAX OR ;
+: _#or ( x _x -- x' )  # RAX OR  nolink ;
 ( Disjoins x with _x. )
-: _#xor ( x _x -- x' )  # RAX XOR ;
+: _#xor ( x _x -- x' )  # RAX XOR  nolink ;
 
-: _#bit? ( x _# -- ? )  # RAX BT  RAX RAX SBB ;
+: _#bit? ( x _# -- ? )  # RAX BT  RAX RAX SBB  nolink ;
 
 ( Shifts n left arithmetically by _# bits. )
-: _#<< ( n _# -- n' )  # RAX SAL ;  alias _#≪
+: _#<< ( n _# -- n' )  # RAX SAL  nolink ;  alias _#≪
 ( Shifts n right arithmetically by _# bits. )
-: _#>> ( n _# -- n' )  # RAX SAR ;  alias _#≫
+: _#>> ( n _# -- n' )  # RAX SAR  nolink ;  alias _#≫
 ( Shifts u left logically by _# bits. )
-: _#u<< ( u _# -- u' )  # RAX SHL ;  alias _#u≪
+: _#u<< ( u _# -- u' )  # RAX SHL  nolink ;  alias _#u≪
 ( Shifts n right logically by _# bits. )
-: _#u>> ( n _# -- u' )  # RAX SHR ;  alias _#u≫
+: _#u>> ( n _# -- u' )  # RAX SHR  nolink ;  alias _#u≫
 
 === Stack Manipulation Clauses ===
 
 ( Drops _u cells. )
-: _#drop ( ... _u -- )  CELLS # RSP ADD ;
+: _#drop ( ... _u -- )  CELLS # RSP ADD  nolink ;
 
 === Storage Clauses ===
 
@@ -209,15 +212,48 @@ vocabulary Clauses
 ( Subtracts _q from quad-word at address a. )
 : _#q-! ( a _q -- )  # QWORD PTR 0 [RAX] SUB  DROP, ;  alias _#q−!  alias _#-!  alias _#−!
 
-( Subtracts _c from byte at address a and returns the new value at a. )
-: _#c−!@ ( a _c -- c )  # BYTE PTR 0 [RAX] SUB  BYTE PTR 0 [RAX] RAX MOVZX ;  alias _#c-!@
-( Subtracts _w from word at address a and returns the new value at a. )
-: _#w−!@ ( a _w -- w )  # WORD PTR 0 [RAX] SUB  WORD PTR 0 [RAX] RAX MOVZX ;  alias _#w-!@
-( Subtracts _d from double-word at address a and returns the new value at a. )
-: _#d−!@ ( a _d -- d )  # DWORD PTR 0 [RAX] SUB  DWORD PTR 0 [RAX] RAX MOV ;  alias _#d-!@
-( Subtracts _w from quad-word at address a and returns the new value at a. )
-: _#q−!@ ( a _q -- q )  # QWORD PTR 0 [RAX] SUB  0 [RAX] RAX MOV ;  alias _#−!@  alias _#q-!@
+( Subtracts signed char _b from byte at address a and returns the new value at a. )
+: _#b−!@ ( a _b -- b )  # BYTE PTR 0 [RAX] SUB  BYTE PTR 0 [RAX] RAX MOVSX  nolink ;  alias _#b-!@
+( Subtracts unsigned char _c from byte at address a and returns the new value at a. )
+: _#c−!@ ( a _c -- c )  # BYTE PTR 0 [RAX] SUB  BYTE PTR 0 [RAX] RAX MOVZX  nolink ;  alias _#c-!@
+( Subtracts signed word _s from word at address a and returns the new value at a. )
+: _#s−!@ ( a _s -- s )  # WORD PTR 0 [RAX] SUB  WORD PTR 0 [RAX] RAX MOVSX  nolink ;  alias _#s-!@
+( Subtracts unsigned word _w from word at address a and returns the new value at a. )
+: _#w−!@ ( a _w -- w )  # WORD PTR 0 [RAX] SUB  WORD PTR 0 [RAX] RAX MOVZX  nolink ;  alias _#w-!@
+( Subtracts signed double-word _i from double-word at address a and returns the new value at a. )
+: _#i−!@ ( a _i -- i )  # DWORD PTR 0 [RAX] SUB  DWORD PTR 0 [RAX] RAX MOVSXD  nolink ;  alias _#i-!@
+( Subtracts unsigned double-word _d from double-word at address a and returns the new value at a. )
+: _#d−!@ ( a _d -- d )  # DWORD PTR 0 [RAX] SUB  DWORD PTR 0 [RAX] EAX MOV  nolink ;  alias _#d-!@
+( Subtracts signed quad-word _l from quad-word at address a and returns the new value at a. )
+: _#l−!@ ( a _l -- l )  # QWORD PTR 0 [RAX] SUB  0 [RAX] RAX MOV  nolink ;  alias _#l-!@
+( Subtracts unsigned quad-word _q from quad-word at address a and returns the new value at a. )
+: _#q−!@ ( a _q -- q )  # QWORD PTR 0 [RAX] SUB  0 [RAX] RAX MOV  nolink ;  alias _#−!@  alias _#q-!@
   alias _#-!@
+
+( Fetches signed char b at address a, then decrements the value at a by _b. )
+: _#b@−! ( a _b -- b )  # RDX MOV  RAX RCX MOV  BYTE PTR 0 [RCX] RAX MOVSX  DL 0 [RCX] SUB  nolink ;
+  alias _#b@-!
+( Fetches unsigned char c at address a, then decrements the value at a by _c. )
+: _#c@−! ( a _c -- c )  # RDX MOV  RAX RCX MOV  BYTE PTR 0 [RCX] RAX MOVZX  DL 0 [RCX] SUB  nolink ;
+  alias _#c@-!
+( Fetches signed word s at address a, then decrements the value at a by _s. )
+: _#s@−! ( a _s -- s )  # RDX MOV  RAX RCX MOV  WORD PTR 0 [RCX] RAX MOVSX  DX 0 [RCX] SUB  nolink ;
+  alias _#s@-!
+( Fetches unsigned word w at address a, then decrements the value at a by _w. )
+: _#w@−! ( a _w -- w )  # RDX MOV  RAX RCX MOV  WORD PTR 0 [RCX] RAX MOVZX  DX 0 [RCX] SUB  nolink ;
+  alias _#w@-!
+( Fetches signed double-word i at address a, then decrements the value at a by _i. )
+: _#i@−! ( a _i -- i )
+  # RDX MOV  RAX RCX MOV  DWORD PTR 0 [RCX] RAX MOVSXD  EDX 0 [RCX] SUB  nolink ;  alias _#i@-!
+( Fetches unsigned double-word d at address a, then decrements the value at a by _d. )
+: _#d@−! ( a _d -- d )  # RDX MOV  RAX RCX MOV  DWORD PTR 0 [RCX] EAX MOV  EDX 0 [RCX] SUB  nolink ;
+  alias _#d@-!
+( Fetches signed quad-word l at address a, then decrements the value at a by _l. )
+: _#l@−! ( a _l -- l )  # RDX MOV  RAX RCX MOV  QWORD PTR 0 [RCX] RAX MOV  RDX 0 [RCX] SUB  nolink ;
+  alias _#l@-!
+( Fetches unsigned quad-word q at address a, then decrements the value at a by _q. )
+: _#q@−! ( a _q -- q )  # RDX MOV  RAX RCX MOV  QWORD PTR 0 [RCX] RAX MOV  RDX 0 [RCX] SUB  nolink ;
+  alias _#q@-!  alias _#@−!  alias _#@-!
 
 --- Number and character builders ---
 
@@ -249,7 +285,7 @@ vocabulary Clauses
 === Memory Logicals ===
 
 ( Tests bit _# of byte range starting at address a. )
-: _#bit@ ( a _# -- ? )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX RAX SBB ;
+: _#bit@ ( a _# -- ? )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX RAX SBB  nolink ;
 
 === String Clauses ===
 
@@ -273,123 +309,144 @@ vocabulary Clauses
 === Conditional Clauses ===
 
 ( Tests if x is equal to _x. )
-: _#= ( x _x -- ? )  # RAX SUB  1 # RAX SUB  RAX POP  RAX RAX SBB ;
+: _#= ( x _x -- ? )  # RAX SUB  1 # RAX SUB  RAX POP  RAX RAX SBB  nolink ;
 ( Tests if x is different from _x. )
-: _#≠ ( x _x -- ? )  # RAX SUB  1 # RAX SUB  CMC  RAX POP  RAX RAX SBB ;
+: _#≠ ( x _x -- ? )  # RAX SUB  1 # RAX SUB  CMC  RAX POP  RAX RAX SBB  nolink ;
 ( Tests if n is less than _n. )
-: _#< ( n _n -- ? )  # RAX CMP  AL < ?SET  AL NEG  AL RAX MOVSX ;
+: _#< ( n _n -- ? )  # RAX CMP  AL < ?SET  AL NEG  AL RAX MOVSX  nolink ;
 ( Tests if n is less than or equal to _n. )
-: _#≤ ( n _n -- ? )  # RAX CMP  AL ≤ ?SET  AL NEG  AL RAX MOVSX ;
+: _#≤ ( n _n -- ? )  # RAX CMP  AL ≤ ?SET  AL NEG  AL RAX MOVSX  nolink ;
 ( Tests if n is greater than _n. )
-: _#> ( n _n -- ? )  # RAX CMP  AL > ?SET  AL NEG  AL RAX MOVSX ;
+: _#> ( n _n -- ? )  # RAX CMP  AL > ?SET  AL NEG  AL RAX MOVSX  nolink ;
 ( Tests if n is greater than or equal to _n. )
-: _#≥ ( n _n -- ? )  # RAX CMP  AL ≥ ?SET  AL NEG  AL RAX MOVSX ;
+: _#≥ ( n _n -- ? )  # RAX CMP  AL ≥ ?SET  AL NEG  AL RAX MOVSX  nolink ;
 ( Tests if u is below _u. )
-: _#u< ( u _u -- ? )  # RAX CMP  RAX RAX SBB ;
+: _#u< ( u _u -- ? )  # RAX CMP  RAX RAX SBB  nolink ;
 ( Tests if u is below than or equal to _u. )
-: _#u≤ ( n _n -- ? )  # RAX CMP  AL U≤ ?SET  AL NEG  AL RAX MOVSX ;
+: _#u≤ ( n _n -- ? )  # RAX CMP  AL U≤ ?SET  AL NEG  AL RAX MOVSX  nolink ;
 ( Tests if u is above _u. )
-: _#u> ( u _u -- ? )  # RAX CMP  AL U> ?SET  AL NEG  AL RAX MOVSX ;
+: _#u> ( u _u -- ? )  # RAX CMP  AL U> ?SET  AL NEG  AL RAX MOVSX  nolink ;
 ( Tests if u is above than or equal to _u. )
-: _#u≥ ( n _n -- ? )  # RAX CMP  CMC  RAX RAX SBB ;
+: _#u≥ ( n _n -- ? )  # RAX CMP  CMC  RAX RAX SBB  nolink ;
 
 === Conditional Term Clauses ===
 
 --- Likely ---
 
 ( Tests if x is equal to _x and starts a likely conditional. )
-: _#=if ( x _x -- )  # RAX CMP  RAX POP  = IF ;  alias _#≠unless
+: _#=if ( x _x -- )  # RAX CMP  RAX POP  = IF  nolink ;  alias _#≠unless
 ( Tests if x is not equal to _x and starts a likely conditional. )
-: _#≠if ( x _x -- )  # RAX CMP  RAX POP  = UNLESS ;  alias _#=unless
+: _#≠if ( x _x -- )  # RAX CMP  RAX POP  = UNLESS  nolink ;  alias _#=unless
 ( Tests if n is less than _n and starts a likely conditional. )
-: _#<if ( n _n -- )  # RAX CMP  RAX POP  < IF ;  alias _#≥unless
+: _#<if ( n _n -- )  # RAX CMP  RAX POP  < IF  nolink ;  alias _#≥unless
 ( Tests if n is not less than _n and starts a likely conditional. )
-: _#≥if ( n _n -- )  # RAX CMP  RAX POP  < UNLESS ;  alias _#<unless
+: _#≥if ( n _n -- )  # RAX CMP  RAX POP  < UNLESS  nolink ;  alias _#<unless
 ( Tests if n is greater than _n and starts a likely conditional. )
-: _#>if ( n _n -- )  # RAX CMP  RAX POP  > IF ;  alias _#≤unless
+: _#>if ( n _n -- )  # RAX CMP  RAX POP  > IF  nolink ;  alias _#≤unless
 ( Tests if n is not greater than _n and starts a likely conditional. )
-: _#≤if ( n _n -- )  # RAX CMP  RAX POP  > UNLESS ;  alias _#>unless
+: _#≤if ( n _n -- )  # RAX CMP  RAX POP  > UNLESS  nolink ;  alias _#>unless
 ( Tests if u is below _u and starts a likely conditional. )
-: _#u<if ( u _u -- )  # RAX CMP  RAX POP  U< IF ;  alias _#u≥unless
+: _#u<if ( u _u -- )  # RAX CMP  RAX POP  U< IF  nolink ;  alias _#u≥unless
 ( Tests if u is not below _u and starts a likely conditional. )
-: _#u≥if ( u _u -- )  # RAX CMP  RAX POP  U< UNLESS ;  alias _#u<unless
+: _#u≥if ( u _u -- )  # RAX CMP  RAX POP  U< UNLESS  nolink ;  alias _#u<unless
 ( Tests if u is above _u and starts a likely conditional. )
-: _#u>if ( u _u -- )  # RAX CMP  RAX POP  U> IF ;  alias _#u≤unless
+: _#u>if ( u _u -- )  # RAX CMP  RAX POP  U> IF  nolink ;  alias _#u≤unless
 ( Tests if u is not above _u and starts a likely conditional. )
-: _#u≤if ( u _u -- )  # RAX CMP  RAX POP  U> UNLESS ;  alias _#u>unless
+: _#u≤if ( u _u -- )  # RAX CMP  RAX POP  U> UNLESS  nolink ;  alias _#u>unless
 
 --- Likely, preserving testee ---
 
-( Tests if x is equal to _x and starts a likely conditional. )
-: _#=?if ( x _x -- )  # RAX CMP  = IF ;  alias _#≠?unless
-( Tests if x is not equal to _x and starts a likely conditional. )
-: _#≠?if ( x _x -- )  # RAX CMP  = UNLESS ;  alias _#=?unless
-( Tests if n is less than _n and starts a likely conditional. )
-: _#<?if ( n _n -- )  # RAX CMP  < IF ;  alias _#≥?unless
-( Tests if n is not less than _n and starts a likely conditional. )
-: _#≥?if ( n _n -- )  # RAX CMP  < UNLESS ;  alias _#<?unless
-( Tests if n is greater than _n and starts a likely conditional. )
-: _#>?if ( n _n -- )  # RAX CMP  > IF ;  alias _#≤?unless
-( Tests if n is not greater than _n and starts a likely conditional. )
-: _#≤?if ( n _n -- )  # RAX CMP  > UNLESS ;  alias _#>?unless
-( Tests if u is below _u and starts a likely conditional. )
-: _#u<?if ( u _u -- )  # RAX CMP  U< IF ;  alias _#u≥?unless
-( Tests if u is not below _u and starts a likely conditional. )
-: _#u≥?if ( u _u -- )  # RAX CMP  U< UNLESS ;  alias _#u<?unless
-( Tests if u is above _u and starts a likely conditional. )
-: _#u>?if ( u _u -- )  # RAX CMP  U> IF ;  alias _#u≤?unless
-( Tests if u is not above _u and starts a likely conditional. )
-: _#u≤?if ( u _u -- )  # RAX CMP  U> UNLESS ;  alias _#u>?unless
+( Tests if x is equal to _x and starts a likely conditional, preserving the comparand. )
+: _#=?if ( x _x -- x )  # RAX CMP  = IF  nolink ;  alias _#≠?unless
+( Tests if x is not equal to _x and starts a likely conditional, preserving the comparand. )
+: _#≠?if ( x _x -- x )  # RAX CMP  = UNLESS  nolink ;  alias _#=?unless
+( Tests if n is less than _n and starts a likely conditional, preserving the comparand. )
+: _#<?if ( n _n -- x )  # RAX CMP  < IF  nolink ;  alias _#≥?unless
+( Tests if n is not less than _n and starts a likely conditional, preserving the comparand. )
+: _#≥?if ( n _n -- x )  # RAX CMP  < UNLESS  nolink ;  alias _#<?unless
+( Tests if n is greater than _n and starts a likely conditional, preserving the comparand. )
+: _#>?if ( n _n -- x )  # RAX CMP  > IF  nolink ;  alias _#≤?unless
+( Tests if n is not greater than _n and starts a likely conditional, preserving the comparand. )
+: _#≤?if ( n _n -- x )  # RAX CMP  > UNLESS  nolink ;  alias _#>?unless
+( Tests if u is below _u and starts a likely conditional, preserving the comparand. )
+: _#u<?if ( u _u -- x )  # RAX CMP  U< IF  nolink ;  alias _#u≥?unless
+( Tests if u is not below _u and starts a likely conditional, preserving the comparand. )
+: _#u≥?if ( u _u -- x )  # RAX CMP  U< UNLESS  nolink ;  alias _#u<?unless
+( Tests if u is above _u and starts a likely conditional, preserving the comparand. )
+: _#u>?if ( u _u -- x )  # RAX CMP  U> IF  nolink ;  alias _#u≤?unless
+( Tests if u is not above _u and starts a likely conditional, preserving the comparand. )
+: _#u≤?if ( u _u -- x )  # RAX CMP  U> UNLESS  nolink ;  alias _#u>?unless
+
+( Loops while x is equal to _x, preserving the comparand. )
+: _#=?while ( x _x -- x )  # RAX CMP  = WHILE  nolink ;
+( Loops while x is not equal to _x, preserving the comparand. )
+: _#≠?while ( x _x -- x )  # RAX CMP  = UNLESS  nolink ;
+( Loops while n is less than _n, preserving the comparand. )
+: _#<?while ( n _n -- x )  # RAX CMP  < WHILE  nolink ;
+( Loops while n is not less than _n, preserving the comparand. )
+: _#≥?while ( n _n -- x )  # RAX CMP  < UNLESS  nolink ;
+( Loops while n is greater than _n, preserving the comparand. )
+: _#>?while ( n _n -- x )  # RAX CMP  > WHILE  nolink ;
+( Loops while n is not greater than _n, preserving the comparand. )
+: _#≤?while ( n _n -- x )  # RAX CMP  > UNLESS  nolink ;
+( Loops while u is below _u, preserving the comparand. )
+: _#u<?while ( u _u -- x )  # RAX CMP  U< WHILE  nolink ;
+( Loops while u is not below _u, preserving the comparand. )
+: _#u≥?while ( u _u -- x )  # RAX CMP  U< UNLESS  nolink ;
+( Loops while u is above _u, preserving the comparand. )
+: _#u>?while ( u _u -- x )  # RAX CMP  U> WHILE  nolink ;
+( Loops while u is not above _u, preserving the comparand. )
+: _#u≤?while ( u _u -- x )  # RAX CMP  U> UNLESS  nolink ;
 
 --- Unlikely ---
 
 ( Tests if x is equal to _x and starts a unlikely conditional. )
-: _#=ifever ( x _x -- )  # RAX CMP  RAX POP  = IFEVER ;  alias _#≠unlessever
+: _#=ifever ( x _x -- )  # RAX CMP  RAX POP  = IFEVER  nolink ;  alias _#≠unlessever
 ( Tests if x is not equal to _x and starts a unlikely conditional. )
-: _#≠ifever ( x _x -- )  # RAX CMP  RAX POP  = UNLESSEVER ;  alias _#=unlessever
+: _#≠ifever ( x _x -- )  # RAX CMP  RAX POP  = UNLESSEVER  nolink ;  alias _#=unlessever
 ( Tests if n is less than _n and starts a unlikely conditional. )
-: _#<ifever ( n _n -- )  # RAX CMP  RAX POP  < IFEVER ;  alias _#≥unlessever
+: _#<ifever ( n _n -- )  # RAX CMP  RAX POP  < IFEVER  nolink ;  alias _#≥unlessever
 ( Tests if n is not less than _n and starts a unlikely conditional. )
-: _#≥ifever ( n _n -- )  # RAX CMP  RAX POP  < UNLESSEVER ;  alias _#<unlessever
+: _#≥ifever ( n _n -- )  # RAX CMP  RAX POP  < UNLESSEVER  nolink ;  alias _#<unlessever
 ( Tests if n is greater than _n and starts a unlikely conditional. )
-: _#>ifever ( n _n -- )  # RAX CMP  RAX POP  > IFEVER ;  alias _#≤unlessever
+: _#>ifever ( n _n -- )  # RAX CMP  RAX POP  > IFEVER  nolink ;  alias _#≤unlessever
 ( Tests if n is not greater than _n and starts a unlikely conditional. )
-: _#≤ifever ( n _n -- )  # RAX CMP  RAX POP  > UNLESSEVER ;  alias _#>unlessever
+: _#≤ifever ( n _n -- )  # RAX CMP  RAX POP  > UNLESSEVER  nolink ;  alias _#>unlessever
 ( Tests if u is below _u and starts a unlikely conditional. )
-: _#u<ifever ( u _u -- )  # RAX CMP  RAX POP  U< IFEVER ;  alias _#u≥unlessever
+: _#u<ifever ( u _u -- )  # RAX CMP  RAX POP  U< IFEVER  nolink ;  alias _#u≥unlessever
 ( Tests if u is not below _u and starts a unlikely conditional. )
-: _#u≥ifever ( u _u -- )  # RAX CMP  RAX POP  U< UNLESSEVER ;  alias _#u<unlessever
+: _#u≥ifever ( u _u -- )  # RAX CMP  RAX POP  U< UNLESSEVER  nolink ;  alias _#u<unlessever
 ( Tests if u is above _u and starts a unlikely conditional. )
-: _#u>ifever ( u _u -- )  # RAX CMP  RAX POP  U> IFEVER ;  alias _#u≤unlessever
+: _#u>ifever ( u _u -- )  # RAX CMP  RAX POP  U> IFEVER  nolink ;  alias _#u≤unlessever
 ( Tests if u is not above _u and starts a unlikely conditional. )
-: _#u≤ifever ( u _u -- )  # RAX CMP  RAX POP  U> UNLESSEVER ;  alias _#u>unlessever
+: _#u≤ifever ( u _u -- )  # RAX CMP  RAX POP  U> UNLESSEVER  nolink ;  alias _#u>unlessever
 
 --- Ununlikely, preserving testee ---
 
 ( Tests if x is equal to _x and starts a unlikely conditional. )
-: _#=?ifever ( x _x -- )  # RAX CMP  = IFEVER ;  alias _#≠?unlessever
+: _#=?ifever ( x _x -- )  # RAX CMP  = IFEVER  nolink ;  alias _#≠?unlessever
 ( Tests if x is not equal to _x and starts a unlikely conditional. )
-: _#≠?ifever ( x _x -- )  # RAX CMP  = UNLESSEVER ;  alias _#=?unlessever
+: _#≠?ifever ( x _x -- )  # RAX CMP  = UNLESSEVER  nolink ;  alias _#=?unlessever
 ( Tests if n is less than _n and starts a unlikely conditional. )
-: _#<?ifever ( n _n -- )  # RAX CMP  < IFEVER ;  alias _#≥?unlessever
+: _#<?ifever ( n _n -- )  # RAX CMP  < IFEVER  nolink ;  alias _#≥?unlessever
 ( Tests if n is not less than _n and starts a unlikely conditional. )
-: _#≥?ifever ( n _n -- )  # RAX CMP  < UNLESSEVER ;  alias _#<?unlessever
+: _#≥?ifever ( n _n -- )  # RAX CMP  < UNLESSEVER  nolink ;  alias _#<?unlessever
 ( Tests if n is greater than _n and starts a unlikely conditional. )
-: _#>?ifever ( n _n -- )  # RAX CMP  > IFEVER ;  alias _#≤?unlessever
+: _#>?ifever ( n _n -- )  # RAX CMP  > IFEVER  nolink ;  alias _#≤?unlessever
 ( Tests if n is not greater than _n and starts a unlikely conditional. )
-: _#≤?ifever ( n _n -- )  # RAX CMP  > UNLESSEVER ;  alias _#>?unlessever
+: _#≤?ifever ( n _n -- )  # RAX CMP  > UNLESSEVER  nolink ;  alias _#>?unlessever
 ( Tests if u is below _u and starts a unlikely conditional. )
-: _#u<?ifever ( u _u -- )  # RAX CMP  U< IFEVER ;  alias _#u≥?unlessever
+: _#u<?ifever ( u _u -- )  # RAX CMP  U< IFEVER  nolink ;  alias _#u≥?unlessever
 ( Tests if u is not below _u and starts a unlikely conditional. )
-: _#u≥?ifever ( u _u -- )  # RAX CMP  U< UNLESSEVER ;  alias _#u<?unlessever
+: _#u≥?ifever ( u _u -- )  # RAX CMP  U< UNLESSEVER  nolink ;  alias _#u<?unlessever
 ( Tests if u is above _u and starts a unlikely conditional. )
-: _#u>?ifever ( u _u -- )  # RAX CMP  U> IFEVER ;  alias _#u≤?unlessever
+: _#u>?ifever ( u _u -- )  # RAX CMP  U> IFEVER  nolink ;  alias _#u≤?unlessever
 ( Tests if u is not above _u and starts a unlikely conditional. )
-: _#u≤?ifever ( u _u -- )  # RAX CMP  U> UNLESSEVER ;  alias _#u>?unlessever
+: _#u≤?ifever ( u _u -- )  # RAX CMP  U> UNLESSEVER  nolink ;  alias _#u>?unlessever
 
 --- Value and Bit Testing ---
 
-: _#bit@if ( a _# -- )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX POP  CY IF ;
-: _#bit@unless ( a _# -- )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX POP  CY UNLESS ;
+: _#bit@if ( a _# -- )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX POP  CY IF  nolink ;
+: _#bit@unless ( a _# -- )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX POP  CY UNLESS  nolink ;
 
 vocabulary;

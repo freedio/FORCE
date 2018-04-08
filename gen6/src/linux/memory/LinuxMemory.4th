@@ -105,11 +105,13 @@ public defer allocate
   otherwise the entire page range is removed from the page directory )
 : reallocate ( a # -- a )  over cell+ @ over u> if  reduceRange  else  drop reallocateRange  then ;
 ( Allocates a single page after the program break, returning its address a. )
-: allocateNewPage ( -- a )  ProgramBreak@ dup Page# + pgmbreak ProgramBreak! ;
+: allocateNewPage ( -- a )  ProgramBreak@ dup Page# + pgmbreak unless
+  >errmsg 1 "Error while setting program break: %s"|abort  then
+  ProgramBreak! ;
 
 ( Allocates a single page of memory, preferrably from the page directory, returning its address a. )
 public static : allocatePage ( -- a )
-  PageDirectory@ begin 0≠?while  dup cell+ @ 4u<if  1 reallocate exit  then
+  PageDirectory@ begin dup 0≠ while  dup cell+ @ 4u<if  1 reallocate exit  then
   @ repeat  drop  allocateNewPage ;
 ( Allocates a single page of clear memory (all zeroes) and returns address a of the block. )
 public static : allocatePage0 ( -- a )  allocatePage  dup Page# cellu/ 0 fill ;
@@ -189,7 +191,7 @@ public static section --- API
 
 ( Initializes the vocabulary from initialization structure at address @initstr when loading. )
 private init : init ( @initstr -- @initstr )
-  1000.s 0 pgmbreak unless  >errmsg 1 "Fatal error while initializing Linux memory: %s"abort  then
+  0 pgmbreak unless  >errmsg 1 "Fatal error while initializing Linux memory: %s"abort  then
   ProgramBreak!  allocatePage0 PageArray!  allocatePage0 ObjectSpace! ProgramBreak@ InitialBreak! ;
 
 vocabulary;

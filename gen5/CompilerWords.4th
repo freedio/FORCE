@@ -157,6 +157,11 @@ vocabulary CompilerWords
 
 : 0=until ( x -- )  UNTILZERO, ;
 
+( Tests if bit # is set in u, and starts a likely conditional. )
+: bitif ( u # -- )  BITIF, ;
+( Tests if bit # is set in bit array at address a, and starts a likely conditional. )
+: bit@if ( a # -- )  BITATIF, ;
+
 --- Likely, preserving testee ---
 
 ( Tests if x is zero and starts a likely conditional. )
@@ -229,6 +234,11 @@ vocabulary CompilerWords
 
 : 0=?until ( x -- x )  DUPUNTILZERO, ;
 
+( Tests if bit # is set in u, and starts a likely conditional. )
+: bit?if ( u # -- )  DUPBITIF, ;
+( Tests if bit # is set in bit array at address a, and starts a likely conditional. )
+: bit@?if ( a # -- )  DUPBITATIF, ;
+
 --- Unlikely ---
 
 ( Tests ifever x is zero and starts a likely conditional. )
@@ -265,6 +275,11 @@ vocabulary CompilerWords
 ( Tests if u₁ is not above u₂ and starts an unlikely conditional. )
 : u≤ifever ( u₁ u₂ -- )  IFEVERNOTABOVE, ;  alias u>unlessever
 
+( Tests if bit # is set in u, and starts an unlikely conditional. )
+: bitifever ( u # -- )  BITIFEVER, ;
+( Tests if bit # is set in bit array at address a, and starts an unlikely conditional. )
+: bit@ifever ( a # -- )  BITATIFEVER, ;
+
 --- Unlikely, preserving testee ---
 
 ( Tests ifever x is zero and starts a likely conditional. )
@@ -300,5 +315,10 @@ vocabulary CompilerWords
 : u>?ifever ( u₁ u₂ -- )  DUPIFEVERABOVE, ;  alias u≤?unlessever
 ( Tests if u₁ is not above u₂ and starts an unlikely conditional. )
 : u≤?ifever ( u₁ u₂ -- )  DUPIFEVERNOTABOVE, ;  alias u>?unlessever
+
+( Tests if bit # is set in u, and starts an unlikely conditional. )
+: bit?ifever ( u # -- )  DUPBITIFEVER, ;
+( Tests if bit # is set in bit array at address a, and starts an unlikely conditional. )
+: bit@?ifever ( a # -- )  DUPBITATIFEVER, ;
 
 vocabulary;

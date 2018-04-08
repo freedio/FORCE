@@ -38,7 +38,7 @@ protected static :: (next) ( TODO implementation ) ;;
 ( Pushes constant −1. )
 : −1 ( -- −1 )  NEGONE, ;  alias true
 ( Pushes a blank. )
-: bl ( -- ␣ )  BLANK, ;
+: bl ( -- ␣ )  BLANK, ;  alias ␣
 
 5 cells constant EXCEPT#
 
@@ -350,6 +350,8 @@ cell+ constant ExHandler#
 : xor ( x1 x2 -- x3 )  XOR, ;
 ( Complements stack cell x1. )
 : not ( x1 -- ¬x1 )  NOT, ;
+( Conjoins x1 with the complement of x2 giving x3. )
+: andn ( x1 x2 -- x3 )  NOT, AND, ;
 
 --- Shift and Rotate ---
 
@@ -595,7 +597,7 @@ cell+ constant ExHandler#
 ( Fills quad-word buffer of length # at address a with q. )
 : qfill ( a # q -- )  QFILL, ;
 ( Fills cell buffer of length # at address a with x. )
-: fill ( a # x -- )  QFILL, ;
+: qfill ( a # x -- )  QFILL, ;  alias fill
 
 ( Looks up c in byte buffer of length # at address a.  Returns 0 if not found, otherwise the 1-based
   index of the location u of the occurrence. )
@@ -608,7 +610,16 @@ cell+ constant ExHandler#
 : dfind ( a # d -- u )  DFIND, ;
 ( Looks up d in quad-word buffer of length # at address a.  Returns 0 if not found, otherwise the
   1-based index of the location u of the occurrence. )
-: qfind ( a # q -- u )  QFIND, ;
+: qfind ( a # q -- u )  QFIND, ;  alias find
+
+( Moves # bytes from source address sa to target address ta. )
+: cmove ( sa ta # -- )  CMOVE, ;
+( Moves # words from source address sa to target address ta. )
+: wmove ( sa ta # -- )  WMOVE, ;
+( Moves # double-words from source address sa to target address ta. )
+: dmove ( sa ta # -- )  DMOVE, ;
+( Moves # quad-words from source address sa to target address ta. )
+: qmove ( sa ta # -- )  QMOVE, ;  alias move
 
 === Short String Operations ===
 
@@ -616,6 +627,8 @@ cell+ constant ExHandler#
 : count ( a$ -- a # )  COUNT, ;
 ( Appends unsigned byte c to counted string in buffer at a$. )
 : c>$ ( c a$ -- )  CAPPEND$, ;
+( Appends b$ to a$. )
+: $>$ ( a$ b$ -- a$ )  APPEND$, ;
 
 === Conditions ===
 
@@ -655,8 +668,10 @@ cell+ constant ExHandler#
 
 === Code Invocation ===
 
-( Executes code of word at address a. )
+( Executes code at address a. )
 : execute ( a -- )  EXECUTE, ;
+( Executes code of word at address @w. )
+: executeWord ( @w -- )  EXECUTEWORD, ;
 
 === Module Initialization ===
 
