@@ -178,9 +178,7 @@ vocabulary InterpreterWords
 
 ( Creates address "name". )
 : create ( >name -- )  readWord  info? if  espace dup $..  then
-  newWord currentCode! >text ENTER_FIELD,
-  CURRENT-FLAGS @ FLAG.STATIC bit? unless  DOFIELD,  else  DOVAR,  then
-  EXIT_FIELD, currentCode#!  segment> ;
+  CURRENT-FLAGS @ FLAG.STATIC bit? unless  createDynAddress  else  createStatAddress  then ;
 ( Defines variable "name".  Inside a class, variables must be typed, regardless of whether they are
   static or not; inside vocabularies, a size specifier [byte, word, ...] must precede. )
 : variable ( type >name -- )  readWord  info? if  espace dup $..  then  LINKER 0!

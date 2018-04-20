@@ -58,12 +58,12 @@ cell+ constant RELOCATION#        ( Size of a relocation entry )
 
 ( For all entries of the relocation table with a target referent of &2, replace the target referent
   with &1 [or &1 word>code if the relocation is relative] and re-apply the relocation. )
-: updateRelocations ( &1 &2 -- )  over word>code >r  §RELT #segment@# RELOCATION# u/ 0 do
+: updateRelocations ( &1 &2 -- )  over word>code >x  §RELT #segment@# RELOCATION# u/ 0 do
   dup REL.TARGET + @  2pick = if  dup REL.SOURCE + @ referentExtra %RELATIVE and if
-    j  else  2pick  then  over REL.TARGET + !  dup applyRelocation  then
-  RELOCATION# + loop  r> 4drop ;
+    x@  else  2pick  then  over REL.TARGET + !  dup applyRelocation  then
+  RELOCATION# + loop  x> 4drop ;
 ( Fulfills deferred word with symbol name s$ with implementation &w. )
-: fulfill ( &w s$ -- )  findSymbol unless  1 "Symbol «%s» not found!"|! abort  then
-  2dup SYM.VALUE + xchg drop nip  updateRelocations ;
+: fulfill ( &w s$ -- )  2dup repWord  findSymbol unless  1 "Symbol «%s» not found!"|! abort  then
+  SYM.FULLNAME over SYM.TYPE + c!  2dup SYM.VALUE + xchg drop nip  updateRelocations ;
 
 vocabulary;

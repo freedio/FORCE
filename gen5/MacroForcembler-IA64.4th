@@ -57,11 +57,6 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 ( Inserts the EXIT_FIELD code. )
 : EXIT_FIELD, ( -- )  RCX PUSH  RET  FIELD_EXIT+  nolink ;
 
-( Sets up the instance variable "me", "my", "this". )
-: ENTER_INSTANCE, ( this -- )  CELL [RBP] RBP LEA  RBX -CELL [RBP] MOV  RBX POP  nolink ;
-( Rstores the previous instance variable. )
-: EXIT_INSTANCE, ( -- )  -CELL [RBP] RBX MOV  -CELL [RBP] RBP LEA  nolink ;
-
 ( Punches a "load int" into the current code. )
 : INT, ( x -- )  1 ADP+  SAVE,  1 ADP-  # RAX MOV  nolink ;
 ( Punches a "load Unicode char" into the current code. )
@@ -160,6 +155,11 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : NEGROLL, ( x₁ x₂ ... xu u -- x₂ ... xu x₁ )  RAX RCX MOV  RAX POP
   BEGIN  RCX DEC  0> WHILE  -CELL [RSP] [RCX] *CELL RAX XCHG  REPEAT  nolink ;
 
+( Sets up the instance variable "me", "my", "this". )
+: ENTER_INSTANCE, ( this -- )  CELL [RBP] RBP LEA  RBX -CELL [RBP] MOV  RAX RBX MOV  DROP, ;
+( Rstores the previous instance variable. )
+: EXIT_INSTANCE, ( -- )  -CELL [RBP] RBX MOV  -CELL [RBP] RBP LEA  nolink ;
+
 --- Returns Stack Operations ---
 
 ( Returns current return stack pointer a. )
@@ -175,14 +175,14 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : TOR, ( x -- R: -- x )  RCOPY,  DROP, ;
 : RDUP, ( R: x -- x x )  -CELL [RBP] RDX MOV  RPUSH,  RDX -CELL [RBP] MOV  nolink ;
 
-: LOOPINDEX, ( -- index R: limit index -- limit index )  RFETCH,  nolink ;
-: LOOPLIMIT, ( -- limit R: limit index -- limit index )   SAVE,  -2 CELLS [RBP] RAX MOV  nolink ;
-: LOOPINDEX2, ( -- index2 R: limit2 index2 limit1 index2 -- limit2 index2 limit1 index2 )
+: LOOPLIMIT, ( -- index R: limit index -- limit index )  RFETCH,  nolink ;
+: LOOPINDEX, ( -- limit R: limit index -- limit index )   SAVE,  -2 CELLS [RBP] RAX MOV  nolink ;
+: LOOPLIMIT2, ( -- index2 R: limit2 index2 limit1 index2 -- limit2 index2 limit1 index2 )
   SAVE,  -3 CELLS [RBP] RAX MOV  nolink ;
-: LOOPLIMIT2, ( -- limit2 R: limit2 index2 limit1 index2 -- limit2 index2 limit1 index2 )
+: LOOPINDEX2, ( -- limit2 R: limit2 index2 limit1 index2 -- limit2 index2 limit1 index2 )
   SAVE,  -4 CELLS [RBP] RAX MOV  nolink ;
 : LOOPPARA, ( -- RDX=limit RCX=index -- R: limit index -- limit index )
-  -CELL [RBP] RCX MOV  -2 CELLS [RBP] RDX MOV  nolink ;
+  -2 CELLS [RBP] RCX MOV  -CELL [RBP] RDX MOV  nolink ;
 : 2RDROP, ( R: x x -- )  -2 CELLS [RBP] RBP LEA  nolink ;
 
 --- Float Stack Operations ---
@@ -468,6 +468,9 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : QSTORE, ( q a -- )  0 [RAX] POP  DROP, ;
 ( Sets oct-word at address a to the LSB64 of o. )
 : OSTORE, ( o a -- )  0 [RAX] POP  CELL [RAX] POP  DROP, ;
+( Stores # bytes of x at address a. )
+: #STORE, ( x a # -- )  RAX RCX MOV  RDX POP  RAX POP  RCX RCX TEST  0= UNLESS
+  FOR  AL 0 [RDX] MOV  8 # RAX SHR  RDX INC  NEXT  THEN DROP, ;
 
 ( Exchanges signed byte at address a with b, returning previous value b'. )
 : BXCHG, ( b a -- b' a )  0 [RSP] RDX MOV  DL 0 [RAX] XCHG  DL RDX MOVSX  RDX 0 [RSP] MOV  nolink ;
@@ -494,6 +497,21 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : QSTOREINC, ( q a -- a+8 )  0 [RAX] POP  8 # RAX ADD  nolink ;
 ( Sets oct-word at address a to the LSB64 of o and post-increments. )
 : OSTOREINC, ( o a -- a+16 )  0 [RAX] POP  CELL [RAX] POP  16 # RAX ADD  nolink ;
+( Stores # bytes of x at address a and advances a by the number of bytes stored. )
+: #STOREINC, ( x a # -- a+# )  RAX RCX MOV  RDX POP  RAX POP  RCX RCX TEST  0= UNLESS
+  FOR  AL 0 [RDX] MOV  8 # RAX SHR  RDX INC  NEXT  THEN  RDX RAX MOV  nolink ;
+
+( Sets byte at address a to the LSB8 of c and post-decrements. )
+: CSTOREDEC, ( c a -- a+1 )  RDX POP  DL 0 [RAX] MOV  RAX DEC  nolink ;
+( Sets word at address a to the LSB16 of w and post-decrements. )
+: WSTOREDEC, ( w a -- a+2 )  RDX POP  DX 0 [RAX] MOV  2 # RAX SUB  nolink ;
+( Sets double-word at address a to the LSB32 of d and post-decrements. )
+: DSTOREDEC, ( d a -- a+4 )  RDX POP  EDX 0 [RAX] MOV  4 # RAX SUB  nolink ;
+( Sets quad-word at address a to the LSB32 of q and post-decrements. )
+: QSTOREDEC, ( q a -- a+8 )  0 [RAX] POP  8 # RAX SUB  nolink ;
+( Sets oct-word at address a to the LSB64 of o and post-decrements. )
+: OSTOREDEC, ( o a -- a+16 )  0 [RAX] POP  CELL [RAX] POP  16 # RAX SUB  nolink ;
+( Stores # bytes of x at address a and advances a by the number of bytes stored. )
 
 ( Sets byte at address a to the LSB8 of c and post-increments. )
 : STORECINC, ( a c -- a+1 )  RDX POP  AL 0 [RDX] MOV  1 [RDX] RAX LEA  nolink ;
@@ -634,7 +652,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : STOREQVAR, ( x -- )  RAX targetVoc# §DATA dup #segment# createReferent [] MOV  DROP, ;
 
 ( Inserts code to address a field within an object instance. )
-: DOFIELD, ( -- a )  SAVE,  targetVoc@ class# [RAX] RAX LEA  nolink ;
+: DOFIELD, ( -- a )  targetVoc@ class# [RAX] RAX LEA  nolink ;
 ( Inserts code to get the field offset. )
 : FIELDOFFSET, ( -- # )
   SAVE,  targetVoc@ class# ?dup if  # RAX MOV  else  RAX RAX XOR  then nolink ;
@@ -693,7 +711,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 ( Inserts code to push the string address onto the stack. )
 : STRING, ( a$ -- a$ [a] )  1 ADP+  there # CALL  1 ADP-  &here -4 &+ >A  nolink ;
 ( Finishes string insertion. )
-: STREND, ( [a] -- )  A> &here swap REL.REL32 reloc,  SWAP,  nolink ;
+: STREND, ( [a] -- )  A> &here swap REL.REL32 reloc,  NOP NOP NOP NOP  SWAP,  nolink ;
 
 === Linux System Calls ===
 
@@ -764,7 +782,24 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 ( Appends b$ to a$. )
 : APPEND$, ( a$ b$ -- a$ )  RSI PUSH  CELL [RSP] RDI XCHG  RDI RAX MOV  BYTE PTR 0 [RDI] RDX MOVZX
   1 [RDI] [RDX] RDI LEA  BYTE PTR 0 [RSI] RCX MOV  RSI INC  CL 0 [RDI] ADD   REP BYTE PTR MOVS
-  RSI POP  RDI POP ;
+  RSI POP  RDI POP  nolink ;
+( Compares short strings a$ and b$. )
+: STRCOMP, ( a$ b$ -- ? )  RAX PUSH  RSI 0 [RSP] XCHG  RDI CELL [RSP] XCHG
+  BYTE PTR 0 [RSI] RCX MOVZX  BYTE PTR 0 [RDI] RAX MOVZX  RAX RCX CMP  U> IF  RAX RCX MOV  THEN
+  RCX INC  REPE BYTE PTR CMPS  1 # RCX SUB  RAX RAX SBB  RSI POP  RDI POP  nolink ;
+( Reads the next unicode character uc from UTF8-buffer at address a and increments cursor a. )
+: FETCHUC$INC, ( a -- a' uc )  BYTE PTR 0 [RAX] RDX MOVSX  RAX INC  $80 # RDX CMP  U< UNLESS
+  RDX NOT  RDX RCX BSR  0= UNLESS
+    RSI PUSH  RAX RSI MOV  DL NOT  RCX NEG  7 # RCX ADD  CL DL SHL  CL DL SHR  RCX DEC
+    FOR  6 # RDX SHL  BYTE PTR LODS  %111111 # AL AND  AL DL OR  NEXT  RSI RAX MOV  RSI POP
+    THEN  THEN  RAX PUSH  RDX RAX MOV  nolink ;
+( Reads the next unicode character uc from UTF8-buffer at address a and adjusts cursor a and
+  remaining length #. )
+: NEXTUC$ADV, ( a # -- a' #' uc )  RAX PUSH  CELL [RSP] RSI XCHG  BYTE PTR 0 [RSI] RDX MOVSX
+  RSI INC  QWORD PTR 0 [RSP] DEC  $80 # RDX CMP  U< UNLESS  RDX NOT  RDX RCX BSR  0= UNLESS
+    DL NOT  RCX NEG  7 # RCX ADD  CL DL SHL  CL DL SHR  RCX DEC  0< UNLESS
+    FOR  6 # RDX SHL  BYTE PTR LODS  QWORD PTR 0 [RSP] DEC  %111111 # AL AND  AL DL OR  NEXT
+  THEN  THEN  THEN  CELL [RSP] RSI XCHG  RDX RAX MOV  nolink ;
 
 === UTF8 ===
 
@@ -784,14 +819,14 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : ASLONG,  RAX RAX TEST  RAX POP  0= UNTIL  nolink ;
 : WHILE,  RAX RAX TEST  RAX POP  0- WHILE  nolink ;
 : REPEAT,  REPEAT  nolink ;
-: DO,  RAX RCX MOV  RDX POP  RAX POP  RCX RDX CMP  > IF
+: DO, ( limit count )  RAX RCX MOV  RDX POP  RAX POP  RCX RDX CMP  > IF
   16 [RBP] RBP LEA  RCX -16 [RBP] MOV  RDX -8 [RBP] MOV  BEGIN  nolink ;
 : UDO,  RAX RCX MOV  RDX POP  RAX POP  RCX RDX CMP  U> IF
   16 [RBP] RBP LEA  RCX -16 [RBP] MOV  RDX -8 [RBP] MOV  BEGIN  nolink ;
-: DODOWN,  RAX RCX MOV  RDX POP  RAX POP  RDX RCX CMP  > IF
-  16 [RBP] RBP LEA  RDX -16 [RBP] MOV  RCX -8 [RBP] MOV  BEGIN  nolink ;
-: LOOP,  QWORD PTR -CELL [RBP] INC  LOOPPARA,  RCX RDX CMP  = UNTIL  2RDROP,  THEN  nolink ;
-: LOOPDOWN,  QWORD PTR -CELL [RBP] DEC  LOOPPARA,  RCX RDX CMP  = UNTIL  2RDROP,  THEN  nolink ;
+: DODOWN,  RAX RCX MOV  RDX POP  RAX POP  RCX RDX CMP  < IF
+  16 [RBP] RBP LEA  RCX -16 [RBP] MOV  RDX -8 [RBP] MOV  BEGIN  nolink ;
+: LOOP,  QWORD PTR -2 CELLS [RBP] INC  LOOPPARA,  RCX RDX CMP  = UNTIL  2RDROP,  THEN  nolink ;
+: LOOPDOWN,  QWORD PTR -2 CELLS [RBP] DEC  LOOPPARA,  RCX RDX CMP  = UNTIL  2RDROP,  THEN  nolink ;
 
 === Conditional Expressions ===
 
@@ -911,12 +946,15 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : DUPUNTILZERO, ( x -- x )  RAX RAX TEST  0= UNTIL  nolink ;
 
 : BITIF, ( u # -- )  RDX POP  RAX RDX BT  RAX POP  CY IF ;
+: BITUNLESS, ( u # -- )  RDX POP  RAX RDX BT  RAX POP  CY UNLESS ;
 : BITATIF, ( a # -- )
-  RDX POP  RAX RCX MOV  64 # RCX SHR  RAX 0 [RDX] [RCX] *CELL BT  RAX POP  CY IF ;
+  RDX POP  RAX RCX MOV  8 # RCX SHR  RAX 0 [RDX] [RCX] *CELL BT  RAX POP  CY IF ;
+: BITATUNLESS, ( a # -- )
+  RDX POP  RAX RCX MOV  8 # RCX SHR  RAX 0 [RDX] [RCX] *CELL BT  RAX POP  CY UNLESS ;
 
 : DUPBITIF, ( u # -- )  RDX POP  RAX RDX BT  RDX RAX MOV  CY IF ;
 : DUPBITATIF, ( a # -- )
-  RDX POP  RAX RCX MOV  64 # RCX SHR  RAX 0 [RDX] [RCX] *CELL BT  RDX RAX MOV  CY IF ;
+  RDX POP  RAX RCX MOV  8 # RCX SHR  RAX 0 [RDX] [RCX] *CELL BT  RDX RAX MOV  CY IF ;
 
 --- Unlikely ---
 

@@ -159,8 +159,12 @@ vocabulary CompilerWords
 
 ( Tests if bit # is set in u, and starts a likely conditional. )
 : bitif ( u # -- )  BITIF, ;
+( Tests if bit # is not set in u, and starts a likely conditional. )
+: bitunless ( u # -- )  BITUNLESS, ;
 ( Tests if bit # is set in bit array at address a, and starts a likely conditional. )
 : bit@if ( a # -- )  BITATIF, ;
+( Tests if bit # is not set in bit array at address a, and starts a likely conditional. )
+: bit@unless ( a # -- )  BITATUNLESS, ;
 
 --- Likely, preserving testee ---
 

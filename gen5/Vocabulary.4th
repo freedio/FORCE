@@ -198,7 +198,7 @@ variable FIELD-FLAGS              ( Visibility of fields )
 : &wordName$ ( &w -- w$ )  &wordName& &@ ;
 
 ( Changes the offset of referent &w so that it points at the code field. )
-: word>code ( &w -- &code )  dup referentSegment 10=unless  dup &@ 4+ c@ 7+ &+  then ;
+: word>code ( &w -- &code )  dup referentSegment 8 and unless  dup &@ 4+ c@ 7+ &+  then ;
 ( For 0, returns a referent to the end of the target text segment, otherwise performs word>code. )
 : ?word>code ( &w|0 -- &code )
   ?dupif  word>code  else  targetVoc# §TEXT dup segment# createReferent  then ;
@@ -282,6 +282,10 @@ cell+ constant DICTENTRY#         ( Size of a dictionary entry )
 ( Adds word &w to the dictionary. )
 : word>dict ( &w -- )  dup &wordName$ createHashValue  DICTENTRY# allocate  dictionary@
   rot cells+ xchg @ tuck DICT.NEXT + !  over &wordName& over DICT.NAME + !  DICT.WORD + ! ;
+( Replaces word referent of dictionary entry with name w$ with &w. )
+: repWord ( &w w$ -- )  dictionary@ over createHashValue  cells+ @  begin dup while ( &w w$ @e )
+  dup DICT.NAME + @ &@ ( &w w$ @e n$ ) 2pick $$=if  ( &w w$ @e )  nip DICT.WORD + ! exit  then
+  DICT.NEXT + @  repeat  3drop ;
 
 -1 =variable PushedVoc
 

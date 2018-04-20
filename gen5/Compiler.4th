@@ -110,5 +110,7 @@ variable LOC                      ( Location of copied code for relocations )
 
 : getDirectI/OTargetWord ( w$ -- &w )  findTargetWord unless
     1 "Word «%s» not found — import force/inout/DirectIO module!"|abort  then ;
+: getFormatTargetWord ( w$ -- &w )  findTargetWord unless
+    1 "Word «%s» not found — import force/string/Format module!"|abort  then ;
 
 vocabulary;

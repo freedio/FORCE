@@ -16,7 +16,5 @@ public section --- API
 
 : construct ( a$ -- )  superconstruct  my Address! ;
 
-: format ( ... # -- ) ... ;
-
 class;
 export ShortString

@@ -1,7 +1,6 @@
 package linux/memory/
 
 import force/lang/Forth
-import force/object/ShortString
 import force/exception/Exceptions
 import force/exception/InvalidArgumentException
 import linux/memory/trouble/MemoryReallocationError
@@ -9,10 +8,11 @@ import force/memory/Page
 import force/memory/SmallPage
 import linux/system/Linux
 import linux/system/UnixErrors
+import force/string/Format
 
 vocabulary Memory
 
-/* All ranges "x up to y" include x and exclude y as usually. */
+/* All ranges "x up to y" include x and exclude y as usual. */
 
 /*
  * There are 3 types of Memory Pages:
@@ -127,13 +127,13 @@ public static : allocatePage0 ( -- a )  allocatePage  dup Page# cellu/ 0 fill ;
 
 ( Creates a small page for entries of size #, registers it in the page directory, and returns its
   address a. )
-: @newSmallPage ( # -- a )  dup allocatePage0  0 over Successor!  2dup Type!  0 over Flags!
-  Page# over Used## − 2pick 8u* 3pick 8u* 1+ u/ over Used#!
-  Page# over Used## − over Used#@ − over Capacity!  dup Capacity@ over #Free!  nip ;
+: @newSmallPage ( # -- a )  allocatePage0  0 over Successor!  2dup Type!  0 over Flags!
+  Page# #Used# − 8u* 2pick 8u* 1+ u/ 8u/ over Used#!
+  Page# #Used# − over Used#@ − 2pick u/ over Capacity!  dup Capacity@ over #Free!  nip ;
 
 ( Returns address a of a small page for entries of size # with a free slot. )
-: @freeSmallPage ( # -- a )  >r PageDirectory@ r@ 4u* + d@ >page
-  begin 0=?while  dup SmallPage#Free@ 0≠if  exit  then  Successor@  repeat  @newSmallPage ;
+: @freeSmallPage ( # -- a )  PageDirectory@ 3100.s ?dupif  swap 4u* + d@ 3200.s >page
+  begin 3300.s 0=?while  3400.s dup SmallPage#Free@ 3500.s 0≠if  3599.s exit  then  3600.s Successor@  repeat  then  3700.s @newSmallPage 3999.s ;
 ( Returns address a of a large page for with enough free space to accommodate an entry of size #. )
 : @freeLargePage ( # -- a )  ... ( >r PageDirectory@ d@ >page begin 0=?while  dup LargePage ) ;
 ( Returns address a of a huge page for with enough free space to accommodate an entry of size #. )
@@ -144,15 +144,15 @@ public static : allocatePage0 ( -- a )  allocatePage  dup Page# cellu/ 0 fill ;
   1=?if  @freeSmallPage  else  512u<?if  @freeLargePage  else  @freeHugePage  then  then ;
 
 ( Allocates a small entry (1 up to 512 bytes). )
-: allocateSmall ( # -- a )  @freeSmallPage Entry ;
+: allocateSmall ( # -- a )  @freeSmallPage 4000.s Entry 4100.s ;
 ( Allocates a large entry (512 up to 4080 bytes). )
 : allocateLarge ( # -- a )  ... ;
 ( Allocates a huge entry (bigger than 4080 bytes). )
 : allocateHuge ( # -- a )  ... ;
 
 ( Allocates a memory chunk of size # and returns its address a. )
-: _allocate ( # -- a )  1<?if  1 "Invalid allocation size: %d"| InvalidArgumentException raise  then
-  512<?if  allocateSmall  else  4080<?if  allocateLarge  else  allocateHuge  then  then ;
+: _allocate ( # -- a )  1100.s 1<?if  1200.s 1 "Invalid allocation size: %d"| InvalidArgumentException raise  then
+  2000.s 512<?if  3000.s allocateSmall  else  4080<?if  6000.s allocateLarge  else  9000.s allocateHuge  then  then 2999.s ;
   fulfills allocate
 
 public static section --- API
@@ -171,7 +171,7 @@ public static section --- API
 --- Entry Allocation ---
 
 ( Allocates a memory chunk of # bytes and clears it to all 0. )
-: allocate0 ( # -- a )  dup allocate tuck -rot 0 cfill ;
+: allocate0 ( # -- a )  1000.s dup allocate 8000.s tuck swap 0 8100.s cfill 8200.s ;
 
 --- Object Allocation ---
 

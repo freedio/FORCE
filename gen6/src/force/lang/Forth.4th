@@ -229,7 +229,7 @@ cell+ constant ExHandler#
 : u|← ( u1 u2 -- u3 )  over ur% − ;  alias u|<
 
 ( Negates n. )
-: neg ( n -- −n )  NEG, ;  alias negate
+: ± ( n -- −n )  NEG, ;  alias negate
 ( Returns the absolute value of n. )
 : abs ( n -- |n| )  ABS, ;
 ( Selects the lesser of two signed numbers n1 and n2. )
@@ -479,6 +479,8 @@ cell+ constant ExHandler#
 : q! ( q a -- )  QSTORE, ;  alias !
 ( Sets oct-word at adddress a to the LSB128 of o. )
 : o! ( o a -- )  OSTORE, ;
+( Stores # bytes of x at address a. )
+: #! ( x a # -- )  #STORE, ;
 
 ( Sets byte at address a to the LSB8 of c and post-increments. )
 : c!++ ( c a -- a+1 )  CSTOREINC, ;
@@ -490,6 +492,8 @@ cell+ constant ExHandler#
 : q!++ ( q a -- a+8 )  QSTOREINC, ;  alias !++
 ( Sets oct-word at adddress a to the LSB128 of o and post-increments. )
 : o!++ ( o a -- a+16 )  OSTOREINC, ;
+( Stores # bytes of x at address a and advances a by the number of bytes stored. )
+: #!++ ( x a # -- a+# )  #STOREINC, ;
 
 ( Sets byte at address a to the LSB8 of c and post-increments. )
 : !c++ ( a c -- a+1 )  STORECINC, ;
@@ -501,6 +505,17 @@ cell+ constant ExHandler#
 : !q++ ( a q -- a+8 )  STOREQINC, ;
 ( Sets oct-word at adddress a to the LSB128 of o and post-increments. )
 : !o++ ( a o -- a+16 )  STOREOINC, ;
+
+( Sets byte at address a to the LSB8 of c and post-decrements. )
+: c!−− ( c a -- a+1 )  CSTOREDEC, ;  alias c!--
+( Sets word at address a to the LSB16 of w and post-decrements. )
+: w!−− ( w a -- a+2 )  WSTOREDEC, ;  alias w!--
+( Sets double-word at address a to the LSB32 of d and post-decrements. )
+: d!−− ( d a -- a+4 )  DSTOREDEC, ;  alias d!--
+( Sets quad-word at adddress a to the LSB64 of q and post-decrements. )
+: q!−− ( q a -- a+8 )  QSTOREDEC, ;  alias !−−  alias q!--  alias !--
+( Sets oct-word at adddress a to the LSB128 of o and post-decrements. )
+: o!−− ( o a -- a+16 )  OSTOREDEC, ;  alias o!--
 
 ( Sets byte at address a-1 to the LSB8 of c after pre-decrements. )
 : --c! ( c a -- a−1 )  DECCSTORE, ;
@@ -570,9 +585,9 @@ cell+ constant ExHandler#
 ( Sets bit # in memory starting at address a. )
 : bit+! ( a # -- )  BSETAT, ;
 ( Clears bit # in memory starting at address a. )
-: bit-! ( a # -- )  BCLRAT, ;  alias bit!-
+: bit−! ( a # -- )  BCLRAT, ;  alias bit-! alias bit!− alias bit!-
 ( Flips bit # in memory starting at address a. )
-: bit×! ( a # -- )  BCHGAT, ;  alias bit!*
+: bit×! ( a # -- )  BCHGAT, ;  alias bit!× alias bit*! alias bit!*
 ( Tests bit # in memory starting at address a, then sets it.  This operation is not atomic. )
 : bit@+ ( a # -- ? )  BTSTSETAT, ;
 ( Tests bit # in memory starting at address a, then clears it.  This operation is not atomic. )
@@ -629,6 +644,15 @@ cell+ constant ExHandler#
 : c>$ ( c a$ -- )  CAPPEND$, ;
 ( Appends b$ to a$. )
 : $>$ ( a$ b$ -- a$ )  APPEND$, ;
+( Reads the next unicode character uc from UTF8-buffer at address a and increments cursor a. )
+: c$@++ ( a -- a' uc )  FETCHUC$INC, ;
+( Reads the next unicode character uc from UTF8-buffer at address a and adjusts cursor a and
+  remaining length #. )
+: c$>++ ( a # -- a' #' uc )  NEXTUC$ADV, ;
+( Stores unicode character uc at UTF8-buffer address a and increments cursor a. )
+: c$!++ ( uc a -- a' )  swap TOUTF8, usize slide #!++ ;
+( Compares short strings a$ and b$. )
+: $= ( a$ b$ -- ? )  STRCOMP, ;
 
 === Conditions ===
 

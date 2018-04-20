@@ -47,7 +47,7 @@ create FIELDNAME$  256 0allot     ( Buffer for getter and setter name )
     createWord ( offset ) currentCode!  >text
     ENTER_FIELD,  FIELDOFFSET,  EXIT_FIELD,  currentCode#!  segment>  then
   abs cell min class#+  r> drop  1 ADP- ;
-: createVariable ( t f$ -- )
+: createVariable ( t v$ -- )
   %WORD.SCOPE FIELD-FLAGS @ andn  CURRENT-FLAGS dup @ >r andn!  FIELDNAME$ tuck $!  1 ADP+
   createWord currentCode!  >text  ENTER_FIELD,  DOVAR,  EXIT_FIELD, currentCode#!  segment>
   FIELDNAME$ dup dup 1c+! count + 1- '@'c!  r@ CURRENT-FLAGS !
@@ -75,5 +75,13 @@ create FIELDNAME$  256 0allot     ( Buffer for getter and setter name )
   segment>  >data abs cell min 0#, segment>  r> drop 1 ADP- ;
 : createConstant ( value c$ -- )  createWord currentCode!
   >text  ENTER_FIELD,  DOCONST,  EXIT_FIELD,  currentCode#!  segment> ;
+: createStatAddress ( a$ -- )
+  1.s createWord currentCode! >text ENTER_FIELD,
+  CURRENT-FLAGS @ FLAG.STATIC bit? unless  DOFIELD,  else  DOVAR,  then
+  EXIT_FIELD, currentCode#!  segment> ;
+: createDynAddress ( a$ -- )  dup 1 ADP+ createStatAddress
+  2.s 1 ADP- FIELDNAME$ tuck $!
+  dup dup 1c+! count + 1− '#'c!  createWord currentCode! >text
+  ENTER_FIELD,  FIELDOFFSET,  EXIT_FIELD,  currentCode#!  segment> ;
 
 vocabulary;
