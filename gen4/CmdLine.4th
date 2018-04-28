@@ -8,7 +8,7 @@ vocabulary CmdLine
   requires" OS.voc"
   requires" StringFormat.voc"
 
-create arg$  256 0allot                    ( Buffer to store counted argument name )
+create arg$  256 0allot                     ( Buffer to store counted argument name )
 variable #args                              ( Number of command line arguments )
 variable #envs                              ( Number of environment variables )
 create @args  128 cells 0allot              ( Argument vector )

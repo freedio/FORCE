@@ -252,7 +252,7 @@ create CLAUSE$  256 0allot        ( Buffer for building a clause )
   tick compiler COMPARSER !  tick interpreter IMPARSER !  interpret
   openConsole sourcefile@ ?dupif
     MODULE$ tuck over c@ 1+ cmove  dup hasExt? unless  ".4th" $$+  then
-    locateSource  info? if  cr dup 1 "Source Module: %s."|log  then  source
+    locateSource  cr dup 1 "Source Module: %s."|log  source
     else  info? if  cr "No source file → Interpreter".  then then
   begin  readWord  ?empty$ not while  F1 PARSER @ execute  repeat  drop
   debug? if  cr "Good-bye!". then  bye ;; >main

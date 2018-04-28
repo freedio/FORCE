@@ -14,6 +14,7 @@ package force/inout/
 
 import my/OS
 import force/convert/UTF8
+import force/lang/Xstack
 
 vocabulary DirectIO
 
@@ -30,6 +31,11 @@ create @Buffer                    ( End of buffer address. )
   begin  r@ u÷% dup 9u> $27 and +  '0'+ 4roll --c! rot 1+ rot 0=?until  drop swap --c!  r> drop ;
 : #n>$ ( n r -- n$ )  over >r swap abs swap #u>$ r> 0<if  '-' over c@! 1+ swap 1- tuck c!  then ;
 
+( Converts unsigned number u to its radix r string equivalent in a transient buffer u$ with #
+  digits. )
+: ##u>$ ( u r # -- u$ )  swap >x @Buffer 0 2swap 0 do
+  x@ u÷% dup 9u> 7and +  '0'+ 4 roll --c! rot 1+ rot loop  drop swap --c!  x> drop ;
+
 ( Converts unsigned number u to its decimal string equivalent u$ in a transient buffer. )
 : u>$ ( u -- u$ )  10 #u>$ ;
 ( Converts unsigned number u to its hexadecimal string equivalent u$ in a transient buffer. )
@@ -38,6 +44,7 @@ create @Buffer                    ( End of buffer address. )
 : Hu>$ ( u -- u$ )  16 #U>$ ;
 ( Converts signed number n to its decimal string equivalent n$ in a transient buffer. )
 : n>$ ( n -- n$ )  10 #n>$ ;
+: #hu>$ ( u # -- u$ )  16 swap ##u>$ ;
 
 public static section --- API
 
@@ -57,6 +64,10 @@ public static section --- API
 : space ( -- )  bl emit ;
 ( Advances the cursor by sending a BLANK to stderr. )
 : espace ( -- )  bl eemit ;
+( Advances the cursor by sending # BLANKs to stdout. )
+: spaces ( # -- )  Buffer 2dup c!  tuck 1+ swap ␣ cfill  out. ;
+( Advances the cursor by sending # BLANKs to stderr. )
+: espaces ( # -- )  Buffer 2dup c! tuck 1+ swap ␣ cfill  err. ;
 ( Prints number n to standard output. )
 : . ( n -- )  n>$ $. ;
 ( Prints number n to standard error. )
@@ -74,8 +85,13 @@ public static section --- API
 ( Prints unsigned number u to standard error as hex number with upper-case letters. )
 : eHu. ( n -- )  Hu>$ $.. ;
 
+( Prints unsigned number u as # hex digits to standard output. )
+: #hu. ( u # -- )  #hu>$ $.. ;
+
 ( Prints string a$ as an error message (highlighted) to stderr. )
 : !$. ( a$ -- )  "\e[1m" $..  $..  "\e[22m" $.. ;
+( Prints string a$ as a debug message (lowlighted) to stderr. )
+: debug. ( a$ -- )  "\e[2m" $..  $..  "\e[22m" $.. ;
 
 vocabulary;
 export DirectIO

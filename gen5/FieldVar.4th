@@ -76,11 +76,11 @@ create FIELDNAME$  256 0allot     ( Buffer for getter and setter name )
 : createConstant ( value c$ -- )  createWord currentCode!
   >text  ENTER_FIELD,  DOCONST,  EXIT_FIELD,  currentCode#!  segment> ;
 : createStatAddress ( a$ -- )
-  1.s createWord currentCode! >text ENTER_FIELD,
+  createWord currentCode! >text ENTER_FIELD,
   CURRENT-FLAGS @ FLAG.STATIC bit? unless  DOFIELD,  else  DOVAR,  then
   EXIT_FIELD, currentCode#!  segment> ;
 : createDynAddress ( a$ -- )  dup 1 ADP+ createStatAddress
-  2.s 1 ADP- FIELDNAME$ tuck $!
+  1 ADP- FIELDNAME$ tuck $!
   dup dup 1c+! count + 1− '#'c!  createWord currentCode! >text
   ENTER_FIELD,  FIELDOFFSET,  EXIT_FIELD,  currentCode#!  segment> ;
 

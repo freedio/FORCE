@@ -5,7 +5,7 @@
 package linux/system/
 
 import force/lang/Forth
-import force/object/ShortString
+import force/string/Format
 
 vocabulary UnixErrors
 

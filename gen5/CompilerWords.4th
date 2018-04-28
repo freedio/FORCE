@@ -14,11 +14,11 @@ vocabulary CompilerWords
   requires" Compiler.voc"
 
 ( Finishes the current colon definition. )
-: (semicolon) ( -- )  LINKER @ if  @CURRENTWORD @ &@ FLAG.LINKER bit+!  then
+: (semicolon) ( -- )  !AstackBalanced  LINKER @ if  @CURRENTWORD @ &@ FLAG.LINKER bit+!  then
   @CURRENTWORD @ &@ FLAG.STATIC bit@ unless  EXIT_INSTANCE,  then
   EXIT, currentCode#! segment>  interpret ;
 ( Finishes the current colon definition w/o exit code. )
-: (doublesemicolon) ( -- )  LINKER @ if  @CURRENTWORD @ &@ FLAG.LINKER bit+!  then
+: (doublesemicolon) ( -- )  !AstackBalanced  LINKER @ if  @CURRENTWORD @ &@ FLAG.LINKER bit+!  then
   EXIT2,  currentCode#! segment>  interpret ;
 
 ( Switches to the interpreter. )
@@ -42,11 +42,17 @@ vocabulary CompilerWords
 === Flow Control ===
 
 ( Exits the current function. )
-: exit ( -- )  EXIT, ;
+: exit ( -- )
+  @CURRENTWORD @ &@ FLAG.STATIC bit@ unless  EXIT_INSTANCE,  then
+  EXIT, ;
 ( Exits the current function and its caller. )
-: 2exit ( -- )  RDROP,  EXIT, ;
+: 2exit ( -- )  RDROP,
+  @CURRENTWORD @ &@ FLAG.STATIC bit@ unless  EXIT_INSTANCE,  then
+  EXIT, ;
 ( Exits one loop and the current function. )
-: exitloop ( -- )  2RDROP,  EXIT, ;
+: exitloop ( -- )  2RDROP,
+  @CURRENTWORD @ &@ FLAG.STATIC bit@ unless  EXIT_INSTANCE,  then
+  EXIT, ;
 
 === Exception Handling ===
 
@@ -80,8 +86,15 @@ vocabulary CompilerWords
 : else  ELSE, ;
 : then  THEN, ;
 
-: ?dupif  DUPIF, ;
-: ?dupunless  DUPUNLESS, ;
+: dupif  DUPIF, ;
+: dupifever  DUPIFEVER, ;
+: dupunless  DUPUNLESS, ;
+: dupunlessever  DUPUNLESSEVER, ;
+
+: ?dupif  ?DUPIF, ;
+: ?dupifever  ?DUPIFEVER, ;
+: ?dupunless  ?DUPUNLESS, ;
+: ?dupunlessever  ?DUPUNLESSEVER, ;
 
 === Conditional Terms ===
 

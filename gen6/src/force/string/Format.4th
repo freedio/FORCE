@@ -319,9 +319,8 @@ create Rules                      ( The list of rules. )
   ' >expon ', ' >EXPON ',         ( e and E )
   ' >float ', ' >FLOAT ',         ( f and F )
   ' >scient ', ' >SCIENT ',       ( g and G )
-  ' >percent ', ' >permille ',    ( % and ‰ )
   ' >time ', ' >TIME ',           ( t and T )
-  ' >newline ',                   ( n )
+  ' >percent ', ' >newline ',     ( % and n )
 
 ( Formats argument [NextArg] according to the specification following at address a with length #,
   consuming the specification. )
@@ -329,9 +328,9 @@ create Rules                      ( The list of rules. )
   0 Precision!  0≠?if  over c@ '.'=if  parsePrecision  then  then
   0 Arg#!  0≠?if  over c@ ':'=if  parseArg#  then  then
   Control .?ReuseArg bit@− if  NextArg@ 1− 0 max NextArg!  then
-  0≠?if  over c@ "bBsSpPcCdDoOxXeEfFgG%‰tTn" count rot cfind ?dupunless
+  0≠?if  over c@ "bBsSpPcCdDoOxXeEfFgGtT%n" count rot cfind ?dupunless
     ecr "\e[1mWarning: Unknown formatting rule '" $.. over c@ eemit "' skipped.\e[22m" $.. exit then
-  >r 1+> Rules r> 1− cells+ @ executeWord ;
+    >r 1+> Rules r> 1− cells+ @ execWord  then ;
 
 public static section --- API
 

@@ -48,7 +48,7 @@ public section
 : throw ( Exception:e -- )
   exdepth 0=if  uncaught  then
   ex@ dup Flags 0bit@if  Current @! ?dupif  lost  else  drop  then  else
-  ex> ?dupunless  uncaught  else  Current!  then
+  ex> ?dupunless  uncaught  else  Current!  then  then
   rp@ sp@ ex@ tuck RefPSP! RefRSP!  ex@ @Next rdrop >r ;
 
 === Module Initialization ===

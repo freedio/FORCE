@@ -14,10 +14,21 @@ uword variable #Free              ( Number of free slots. )
 uword variable Used#              ( Size of the bit array in bytes. )
 create #Used                      ( Bit array of used entries. )
 
+private section --- Interna ----------------------
+
+( Marks slot # on page @p occupied. )
+: occupy ( # @p -- )  me #Used# + swap bit+! ;
+
+public section --- API ---------------------------
+
 ( Returns entry base address @e0 on page @p. )
-: Base ( @p -- @e0 )  4002.s my #Used# + 4003.s my Used#@ + ;
+: Base ( @p -- @e0 )  my #Used# + my Used#@ + ;
 ( Occupies one entry on page @p and returns its address @e. )
-: Entry ( @p -- @e )  4001.s my Base 4010.s my 4015.s #Free 4020.s 1w-!@ 4030.s my Type@ 4040.s u*+ 4050.s ;
+: Entry ( @p -- @e )  my Base my #Free 1w-!@ dup me occupy my Type@ u*+ ;
+( Checks if page @p has no free entry left. )
+: full? ( @p -- ? )  my #Free@ 0= ;
+( Checks if page @p has no allocated entry left. )
+: empty? ( @p -- ? )  my #Free@ my Capacity@ = ;
 
 structure;
 export SmallPage

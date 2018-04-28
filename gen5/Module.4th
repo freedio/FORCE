@@ -12,6 +12,7 @@ vocabulary Module
   requires" LinuxFile.voc"
   requires" Vocabulary.voc"
   requires" Relocation.voc"
+  requires" CmdLine.voc"
 
 create SOURCE$  256 0allot          ( Name of the source file [without extension] )
 create OUTPUT$  256 0allot          ( Name of the output file [without extension] )
@@ -49,6 +50,10 @@ create INITSTRUCT                   ( structure passed to initialization functio
   0 ,                               ( Address of the sourceLine variable )
   0 ,                               ( Address of the sourceColumn variable )
   0 ,                               ( Initial exception stack pointer )
+  0 ,                               ( Command line argument count )
+  0 ,                               ( Command line argument vector )
+  0 ,                               ( Environment variable count )
+  0 ,                               ( Environment variable vector )
 
 ( Prepares target vocabulary for saving as module m$ [no file extension!] by transforming all
   relocations to dependency-related format, adding dependency entries as needed, and finalizing the
@@ -119,6 +124,7 @@ create INITSTRUCT                   ( structure passed to initialization functio
   cell+ loop  drop  loadModule ;
 ( Initialization required to make Module module work. )
 : initModule ( @ex -- )  tick findModule FINDMODULE !
-  INITSTRUCT sp0 !++x  rp0 !++x  INFILENAME !++x  INLINE !++x  INCOLUMN !++x  !++  drop ;
+  INITSTRUCT sp0 !++x  rp0 !++x  INFILENAME !++x  INLINE !++x  INCOLUMN !++x  !++
+  #args @ !++x  @args !++x  #envs @ !++x  @envs !++x  drop ;
 
 vocabulary;

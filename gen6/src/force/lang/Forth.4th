@@ -81,7 +81,7 @@ cell+ constant ExHandler#
 ( Drops second of stack. (swap drop) )
 : nip ( x₁ x₂ -- x₂ )  NIP, ;
 ( Replaces second of stack with top of stack (drop dup). )
-: smash ( x₁ x₂ -- x₂ x₂ )  SMASH, ;
+: smash ( x₁ x₂ -- x₁ x₁ )  SMASH, ;
 ( Rotates stack triple up. )
 : rot ( x₁ x₂ x₃ -- x₂ x₃ x₁ )  ROT, ;
 ( Rotates stack triple down. )
@@ -182,7 +182,7 @@ cell+ constant ExHandler#
 ( Divides n₂ through n₁. )
 : r÷ ( n₁ n₂ -- n₂÷n₁ )  RTHROUGH, ;  alias r/
 ( Divides u₁ through u₂. )
-: ÷ ( u₁ u₂ -- u₁÷u₂ )  UTHROUGH, ;  alias u/
+: u÷ ( u₁ u₂ -- u₁÷u₂ )  UTHROUGH, ;  alias u/
 ( Divides u₂ through u₁. )
 : ur÷ ( u₁ u₂ -- u₂÷u₁ )  URTHROUGH, ;  alias ur/
 ( Calculates the rest of the integer division n₁ through n₂. )
@@ -638,12 +638,16 @@ cell+ constant ExHandler#
 
 === Short String Operations ===
 
-( Returns address a and ength # of short string a$. )
+( Returns address a and length # of short string a$. )
 : count ( a$ -- a # )  COUNT, ;
+( Returns address a and length # of zero terminated string aº.  Note that # may theoretically be -1
+  if no zero was found inside the string; practically, a segmentation fault will occur first in this
+  case. )
+: 0count ( aº -- a # )  dup -1 0 cfind 1- ;
 ( Appends unsigned byte c to counted string in buffer at a$. )
 : c>$ ( c a$ -- )  CAPPEND$, ;
 ( Appends b$ to a$. )
-: $>$ ( a$ b$ -- a$ )  APPEND$, ;
+: $+$ ( a$ b$ -- a$ )  APPEND$, ;
 ( Reads the next unicode character uc from UTF8-buffer at address a and increments cursor a. )
 : c$@++ ( a -- a' uc )  FETCHUC$INC, ;
 ( Reads the next unicode character uc from UTF8-buffer at address a and adjusts cursor a and
@@ -653,6 +657,12 @@ cell+ constant ExHandler#
 : c$!++ ( uc a -- a' )  swap TOUTF8, usize slide #!++ ;
 ( Compares short strings a$ and b$. )
 : $= ( a$ b$ -- ? )  STRCOMP, ;
+( Converts character buffer a with length # to counted short string in buffer of minimum size 256
+  at a$.  If # is not in the range [0;255], it is trimmed. )
+: a#>$ ( a # a$ -- a$ )  >r 0 max 255 umin  dup r@ c!  r@ 1+ swap cmove  r> ;
+( Converts zero-terminated string at aº to counted short string in buffer of minimum size 256
+  at a$.  If aº is longer than 255 chars, only the first 255 will be copied. )
+: z>$ ( aº a$ -- a$ )  over -1 0 cfind 1- swap a#>$ ;
 
 === Conditions ===
 
@@ -695,7 +705,7 @@ cell+ constant ExHandler#
 ( Executes code at address a. )
 : execute ( a -- )  EXECUTE, ;
 ( Executes code of word at address @w. )
-: executeWord ( @w -- )  EXECUTEWORD, ;
+: execWord ( @w -- )  EXECUTEWORD, ;
 
 === Module Initialization ===
 

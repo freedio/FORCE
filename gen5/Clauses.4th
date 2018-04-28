@@ -44,7 +44,7 @@ vocabulary Clauses
   16384=?if  drop  14 # RAX SHL  else
   32768=?if  drop  15 # RAX SHL  else
   65536=?if  drop  16 # RAX SHL  else
-  # RDX MOV  RDX IMUL
+  # RAX RAX IMUL
   then  then  then  then  then  then  then  then  then  then  then  then  then  then  then  then
   then  then  then  nolink ;  alias _#*
 ( Multiply u with _u. )
@@ -165,8 +165,6 @@ vocabulary Clauses
 ( Disjoins x with _x. )
 : _#xor ( x _x -- x' )  # RAX XOR  nolink ;
 
-: _#bit? ( x _# -- ? )  # RAX BT  RAX RAX SBB  nolink ;
-
 ( Shifts n left arithmetically by _# bits. )
 : _#<< ( n _# -- n' )  # RAX SAL  nolink ;  alias _#≪
 ( Shifts n right arithmetically by _# bits. )
@@ -175,6 +173,21 @@ vocabulary Clauses
 : _#u<< ( u _# -- u' )  # RAX SHL  nolink ;  alias _#u≪
 ( Shifts n right logically by _# bits. )
 : _#u>> ( n _# -- u' )  # RAX SHR  nolink ;  alias _#u≫
+
+( Tests bit _# in u. )
+: _#bit? ( u _# -- ? )  # RAX BT  RAX RAX SBB  nolink ;
+( Sets bit _# in u. )
+: _#bit+ ( u _# -- u' )  # RAX BTS  nolink ;
+( Clears bit _# in u. )
+: _#bit− ( u _# -- u' )  # RAX BTR  nolink ;  alias _#bit-
+( Flips bit _# in u. )
+: _#bit× ( u _# -- u' )  # RAX BTC  nolink ;  alias _#bit*
+( Tests and sets bit _# in u. )
+: _#bit?+ ( u _# -- u' )  # RAX BTS  RAX PUSH  RAX RAX SBB  nolink ;
+( Tests and clears bit _# in u. )
+: _#bit?− ( u _# -- u' )  # RAX BTR  RAX PUSH  RAX RAX SBB  nolink ;  alias _#bit?-
+( Tests and flips bit _# in u. )
+: _#bit?× ( u _# -- u' )  # RAX BTC  RAX PUSH  RAX RAX SBB  nolink ;  alias _#bit?*
 
 === Stack Manipulation Clauses ===
 
@@ -255,7 +268,17 @@ vocabulary Clauses
 : _#q@−! ( a _q -- q )  # RDX MOV  RAX RCX MOV  QWORD PTR 0 [RCX] RAX MOV  RDX 0 [RCX] SUB  nolink ;
   alias _#q@-!  alias _#@−!  alias _#@-!
 
+--- Bit Operations ---
+
+( Clears bit _# in bit array at address a. )
+: _#bit−! ( a _# -- )  64u/mod swap # QWORD PTR swap [RAX] BTR  DROP, ;  alias _#bit-!
+
 --- Number and character builders ---
+
+( Multiplies n by _n and adds it to u, giving u'. )
+: _#*+ ( u n _n -- u' )  _#×  RDX POP  RDX RAX ADD  nolink ;
+( Multiplies u₂ by _u and adds it to u₁, giving u₁'. )
+: _#u*+ ( u₁ u₂ _u -- u₁' )  _#u×  RDX POP  RDX RAX ADD  nolink ;
 
 ( Multiplies unsigned quad-word at a with _u and adds u. )
 : _#q*+! ( u a _u -- )  1 ADP+  RAX RCX MOV  1 ADP-  # RAX MOV  QWORD PTR 0 [RCX] MUL  RDX POP
@@ -311,9 +334,9 @@ vocabulary Clauses
 === Conditional Clauses ===
 
 ( Tests if x is equal to _x. )
-: _#= ( x _x -- ? )  # RAX SUB  1 # RAX SUB  RAX POP  RAX RAX SBB  nolink ;
+: _#= ( x _x -- ? )  # RAX SUB  1 # RAX SUB  RAX RAX SBB  nolink ;
 ( Tests if x is different from _x. )
-: _#≠ ( x _x -- ? )  # RAX SUB  1 # RAX SUB  CMC  RAX POP  RAX RAX SBB  nolink ;
+: _#≠ ( x _x -- ? )  # RAX SUB  1 # RAX SUB  CMC  RAX RAX SBB  nolink ;
 ( Tests if n is less than _n. )
 : _#< ( n _n -- ? )  # RAX CMP  AL < ?SET  AL NEG  AL RAX MOVSX  nolink ;
 ( Tests if n is less than or equal to _n. )
@@ -382,23 +405,44 @@ vocabulary Clauses
 ( Loops while x is equal to _x, preserving the comparand. )
 : _#=?while ( x _x -- x )  # RAX CMP  = WHILE  nolink ;
 ( Loops while x is not equal to _x, preserving the comparand. )
-: _#≠?while ( x _x -- x )  # RAX CMP  = UNLESS  nolink ;
+: _#≠?while ( x _x -- x )  # RAX CMP  ≠ WHILE  nolink ;
 ( Loops while n is less than _n, preserving the comparand. )
 : _#<?while ( n _n -- x )  # RAX CMP  < WHILE  nolink ;
 ( Loops while n is not less than _n, preserving the comparand. )
-: _#≥?while ( n _n -- x )  # RAX CMP  < UNLESS  nolink ;
+: _#≥?while ( n _n -- x )  # RAX CMP  ≥ WHILE  nolink ;
 ( Loops while n is greater than _n, preserving the comparand. )
 : _#>?while ( n _n -- x )  # RAX CMP  > WHILE  nolink ;
 ( Loops while n is not greater than _n, preserving the comparand. )
-: _#≤?while ( n _n -- x )  # RAX CMP  > UNLESS  nolink ;
+: _#≤?while ( n _n -- x )  # RAX CMP  ≤ WHILE  nolink ;
 ( Loops while u is below _u, preserving the comparand. )
 : _#u<?while ( u _u -- x )  # RAX CMP  U< WHILE  nolink ;
 ( Loops while u is not below _u, preserving the comparand. )
-: _#u≥?while ( u _u -- x )  # RAX CMP  U< UNLESS  nolink ;
+: _#u≥?while ( u _u -- x )  # RAX CMP  U≥ WHILE  nolink ;
 ( Loops while u is above _u, preserving the comparand. )
 : _#u>?while ( u _u -- x )  # RAX CMP  U> WHILE  nolink ;
 ( Loops while u is not above _u, preserving the comparand. )
-: _#u≤?while ( u _u -- x )  # RAX CMP  U> UNLESS  nolink ;
+: _#u≤?while ( u _u -- x )  # RAX CMP  U≤ WHILE  nolink ;
+
+( Loops until x is equal to _x, preserving the comparand. )
+: _#=?until ( x _x -- x )  # RAX CMP  = UNTIL  nolink ;
+( Loops until x is not equal to _x, preserving the comparand. )
+: _#≠?until ( x _x -- x )  # RAX CMP  ≠ UNTIL  nolink ;
+( Loops until n is less than _n, preserving the comparand. )
+: _#<?until ( n _n -- x )  # RAX CMP  < UNTIL  nolink ;
+( Loops until n is not less than _n, preserving the comparand. )
+: _#≥?until ( n _n -- x )  # RAX CMP  ≥ UNTIL  nolink ;
+( Loops until n is greater than _n, preserving the comparand. )
+: _#>?until ( n _n -- x )  # RAX CMP  > UNTIL  nolink ;
+( Loops until n is not greater than _n, preserving the comparand. )
+: _#≤?until ( n _n -- x )  # RAX CMP  ≤ UNTIL  nolink ;
+( Loops until u is below _u, preserving the comparand. )
+: _#u<?until ( u _u -- x )  # RAX CMP  U< UNTIL  nolink ;
+( Loops until u is not below _u, preserving the comparand. )
+: _#u≥?until ( u _u -- x )  # RAX CMP  U< UNTIL  nolink ;
+( Loops until u is above _u, preserving the comparand. )
+: _#u>?until ( u _u -- x )  # RAX CMP  U> UNTIL  nolink ;
+( Loops until u is not above _u, preserving the comparand. )
+: _#u≤?until ( u _u -- x )  # RAX CMP  U≤ UNTIL  nolink ;
 
 --- Unlikely ---
 
@@ -448,7 +492,13 @@ vocabulary Clauses
 
 --- Value and Bit Testing ---
 
-: _#bit@if ( a _# -- )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX POP  CY IF  nolink ;
-: _#bit@unless ( a _# -- )  64u/mod # swap 8* QWORD PTR [RAX] BT  RAX POP  CY UNLESS  nolink ;
+( Tests if bit _# in bit array at address a is set and starts conditional. )
+: _#bit@if ( a _# -- )  64u/mod swap # swap 8* QWORD PTR [RAX] BT  RAX POP  CY IF  nolink ;
+( Tests if bit _# in bit array at address a is set and starts conditional. )
+: _#bit@?if ( a _# -- a )  64u/mod swap # swap 8* QWORD PTR [RAX] BT  CY IF  nolink ;
+( Tests if bit _# in bit array at address a is not set and starts conditional. )
+: _#bit@unless ( a _# -- )  64u/mod swap # swap 8* QWORD PTR [RAX] BT  RAX POP  CY UNLESS  nolink ;
+( Tests bit _# in bit array at address a is not set and starts conditional. )
+: _#bit@?unless ( a _# -- )  64u/mod swap # swap 8* QWORD PTR [RAX] BT  CY UNLESS  nolink ;
 
 vocabulary;

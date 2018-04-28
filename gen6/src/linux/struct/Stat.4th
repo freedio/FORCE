@@ -4,6 +4,7 @@
 
 package linux/struct/
 
+import force/lang/Forth
 import force/structure/Fundamental
 
 Fundamental structure Stat

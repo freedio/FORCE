@@ -67,7 +67,7 @@ vocabulary Char
   dup $4C1 $4CF within over 1and 1− and if  1− exit  then
   dup $4D0 $530 within over 1and and if  1− exit  then
   $500<?if  exit  then
-  dup $560 $587 within $30− exit  then
+  dup $560 $587 within if  $30− exit  then
   $1000<?if  exit  then
   dup $10D0 $10F6 within if  $30− exit  then
   $10F7=?if  $30− exit  then

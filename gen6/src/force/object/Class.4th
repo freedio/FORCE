@@ -2,6 +2,7 @@ package force/object/
 
 import force/object/Object
 import force/exception/TypeCastException
+import my/Memory
 
 Object class Class
 

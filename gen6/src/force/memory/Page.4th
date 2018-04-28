@@ -11,9 +11,9 @@ Fundamental structure Page
 
 4096 constant Page#               ( Standard Page Size. )
 
-cell variable Successor           ( Address of next memory page. )
-ubyte variable Type               ( Page type: 0=large, 511=huge, 1−511=small. )
-ubyte variable Flags              ( See flags below. )
+udword variable Successor         ( Number of next memory page. )
+ ubyte variable Type              ( Page type: 0=large, 511=huge, 1−511=small. )
+ ubyte variable Flags             ( See flags below. )
 
 ( Page flag indices: )
 00 constant %full                 ( set: Page is full. )

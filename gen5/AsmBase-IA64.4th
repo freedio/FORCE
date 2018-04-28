@@ -996,6 +996,7 @@ bytevar OP#
 
 : ADP+ ( n -- ) ( cr ." ADP+ " ADP @ . ) ADP +! ( ADP @ . ) ;
 : ADP- ( n -- ) ( cr ." ADP- " ADP @ . ) ADP -! ( ADP @ . ) ;
+: !AstackBalanced ( -- )  A? if  "Unbalanced block!"!  abort  then ;
 
 ( Initializes the forcembler. )
 : initA4 ( -- )  tick .error ERROR-HANDLER ! ;

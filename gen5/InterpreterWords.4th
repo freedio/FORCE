@@ -116,6 +116,8 @@ vocabulary InterpreterWords
 : public ( -- )  CURRENT-FLAGS dup @ 3 andn SCOPE.PUBLIC or swap ! ;
 ( Sets STATIC flag. )
 : static ( -- )  CURRENT-FLAGS FLAG.STATIC bit+! ;
+( Clears STATIC flag. )
+: dynamic ( -- )  CURRENT-FLAGS FLAG.STATIC bit−! ;
 ( Sets INIT flag. )
 : init ( -- )  CURRENT-FLAGS FLAG.INITCODE bit+! ;
 

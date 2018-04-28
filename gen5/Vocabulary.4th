@@ -289,17 +289,19 @@ cell+ constant DICTENTRY#         ( Size of a dictionary entry )
 
 -1 =variable PushedVoc
 
+200 bloat
+
 ( Looks up word w$ in vocabulary #v; if found, returns the word referent, otherwise the original
   name. )
 : findLocalWord ( #v w$ -- &w t | w$ f )  dictionary@ over createHashValue  cells+ @
   begin dup while  dup DICT.NAME + @ &@ 2pick $$=if  dup DICT.WORD + @ referentVocabulary
-  3pick = if  DICT.WORD + @ nip true exit  then then  DICT.NEXT + @  repeat  rot drop ;
-( Looks up word w$ in the psuhed vocabulary, or absent it in the loaded target vocabularies; if
+  3pick =if  DICT.WORD + @ nip true exit  then then  DICT.NEXT + @  repeat  rot drop ;
+( Looks up word w$ in the pushed vocabulary, or absent it in the loaded target vocabularies; if
   found, returns the word referent, otherwise the original name. )
 : findTargetWord ( w$ -- &w t | w$ f )
-  PushedVoc @ -1≠if  PushedVoc @ swap findLocalWord  unless
+  PushedVoc @ -1≠if  PushedVoc @  swap findLocalWord  if  PushedVoc -1!  nip true exit  else
     PushedVoc @ #vocabulary$ swap 2 "Word «%s» not found in vocabulary «%s»!"|! abort  then  then
-  PushedVoc -1!  dictionary@ over createHashValue  cells+ @
+  dictionary@ over createHashValue  cells+ @
   begin dup while  dup DICT.NAME + @ &@ 2pick $$=if  DICT.WORD + @ nip true exit  then
   DICT.NEXT + @  repeat ;
 ( Returns referent &w of target word w$, or aborts with a failure if the word was not found. )
