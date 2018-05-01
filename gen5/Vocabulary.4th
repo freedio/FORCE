@@ -493,6 +493,9 @@ variable @CURRENTCODE             ( Referent to first byte of code being entered
 ( Pushes vocabulary #v. )
 : pushVocabulary ( #v -- )  PushedVoc dup @ -1=unless
   "Trying to push multiple vocabularies doesn't make sense!"! abort  then  ! ;
+( Returns the index of the currently pushed vocabulary. )
+: voc# ( -- @v )
+  -1 PushedVoc xchg drop -1=?if  "No vocabulary specified!"! abort  then ;
 ( Handles the case where a vocabulary was pushed, then a compiler word was executed, but the
   compiler word did not use the vocabulary. )
 : handleUnusedVocabulary ( -- )

@@ -3,6 +3,7 @@ package linux/memory/
 import force/lang/Forth
 import force/exception/Exceptions
 import force/exception/InvalidArgumentException
+import force/string/Format
 import linux/memory/trouble/MemoryReallocationError
 import force/memory/Page
 import force/memory/SmallPage
@@ -10,7 +11,7 @@ import force/memory/LargePage
 import force/memory/HugePage
 import linux/system/Linux
 import linux/system/UnixErrors
-import force/string/Format
+import force/app/Args
 
 vocabulary Memory
 
@@ -61,15 +62,13 @@ vocabulary Memory
  */
 
 /*
- * The page array is a memory page containing a list of page numbers for entries of the size equal
+ * A page array is a memory page containing a list of page numbers for entries of the size equal
  * to the page index --- except for page 0, which is for large entries, and page 511, which is for
  * huge entries.  So, the fourth page number is for entries of size 4, the 100th page number for
  * entries of size 100.
- */
 
-/*
- * The object page array is a memory page of the same structure as the page array, but it is
- * reserved for object instances.  This makes garbage collection a lot easier, because the garbage
+ * There are two page arrays: one for anonymous chunks, called ChunkSpace, and one for objects,
+ * called ObjectSpace.  This makes garbage collection a lot easier, because the garbage
  * collector then only has to check the object page array.
  */
 
@@ -89,10 +88,11 @@ cell variable InitialBreak        ( Initial address of the program break. )
 cell variable ProgramBreak        ( Current address of the program break = top memory. )
 cell variable ObjectSpace         ( Address of the object page array. )
 4096 constant Page#               ( Size of a memory page, linked with Page%. )
--4096 constant -Page#             ( Mask of a memory page address. )
+Page# ± constant -Page#           ( Mask of a memory page address. )
 12 constant Page%                 ( Shift for page related operations, linked with Page#. )
-cell variable PageArray           ( Address of the page array: 512 page pointers )
+cell variable ChunkSpace          ( Address of the chunk page array. )
 cell variable PageDirectory       ( Address of the page directory. )
+cell variable PageArray           ( Address of the current PageArray variable. )
 
 255 constant MAX_SMALL            ( Maximum small entry size + 1. )
 4081 constant MAX_LARGE           ( Maximum large entry size + 1. )
@@ -103,11 +103,19 @@ cell variable PageDirectory       ( Address of the page directory. )
 : >page# ( @p -- #p )  Page% u>> ;
 
 ( Returns page number #p stored at entry # in the page array. )
-: toppage@ ( # -- #p )  PageArray@ swap 4u*+ d@ ;
+: toppage@ ( # -- #p )  PageArray@ @ swap 4u*+ d@ ;
 ( Stores page number #p at entry # in the page array. )
-: toppage! ( #p # -- )  PageArray@ swap 4u*+ d! ;
+: toppage! ( #p # -- )  PageArray@ @ swap 4u*+ d! ;
 
-public defer allocate
+public defer allocObj
+public defer allocatePage0
+
+( Initializes the vocabulary from initialization structure at address @initstr when loading. )
+private ( init ) : init ( @initstr -- @initstr )
+  0 pgmbreak unless  >errmsg 1 "Fatal error while initializing Linux memory: %s!"abort  then
+  ProgramBreak!  allocatePage0 ChunkSpace!  allocatePage0 ObjectSpace! ProgramBreak@ InitialBreak! ;
+
+: ?init ( -- )  ProgramBreak@ unless  init  then ;
 
 ( Reduces freed page range at address a by # pages and returns the address of the removed range. )
 : reduceRange ( a # -- a' )  over cell+ −!  dup cell+ @ pages + ;
@@ -118,39 +126,47 @@ public defer allocate
 ( Reallocates # pages of the freed page range at address a.
   If the range at address a contains more than # pages, the last of them are removed and allocated,
   otherwise the entire page range is removed from the page directory )
-: reallocate ( a # -- a )  over cell+ @ over u> if  reduceRange  else  drop reallocateRange  then ;
+: reallocate ( a # -- a )  debug? if  newline 2dup over cell+ @ swap
+  3 "Reallocating %d pages from page array of %d pages at %016X"| debug.  then
+  over cell+ @ over u> if  reduceRange  else  drop reallocateRange  then
+  debug? if  dup 1 ": @%016X."| debug.  then ;
 ( Allocates a single page after the program break, returning its address a. )
-: allocateNewPage ( -- a )  ProgramBreak@ dup Page# + pgmbreak unless
-  >errmsg 1 "Error while setting program break: %s"|abort  then
-  ProgramBreak! ;
+: allocateNewPage ( -- a )  debug? if  newline dup 1 "Allocating new page"| debug.  then
+  ProgramBreak@ dup Page# + pgmbreak unless
+  >errmsg 1 "Error while setting program break: %s"|abort  then  ProgramBreak!
+  debug? if  dup 1 ": @%016X."| debug.  then ;
 ( Unlinks page @p from page array slot at address a. )
 : _unlinkPage ( @p a -- )  begin  2dup d@ pages ≠while  d@ pages  0=?until  2drop exit  then
   swap Successor@ swap d! ;
 ( Removes page @p from the page array. )
-: unlinkPage ( @p -- )  PageArray@ over PageType@ 4*+ _unlinkPage ;
+: unlinkPage ( @p -- )  PageArray@ @ over PageType@ 4*+ _unlinkPage ;
 ( Merges free pages in the page directory. )
-: mergeFreePages ( -- )  PageDirectory@ begin  dup 1 ProgramBreak@ within while  dup cell+ @ pages over + over @ =?if
+: mergeFreePages ( -- )
+  PageDirectory@ begin  dup 1 ProgramBreak@ within while  dup cell+ @ pages over + over @ =?if
   2dup @ swap !  cell+ @ over cell+ +!  else  nip  then  repeat  drop ;
 ( Inserts page(s) @p into the page directory. )
 : freePage ( @p -- )  PageDirectory  begin  2dup @ dup 0- -rot u> and while
   @  0=?until  drop PageDirectory! exit  then  2dup @! nip swap ! ;
 ( Clears page at address a to all zeroes. )
-: clearPage ( a -- )  Page# cellu/ 0 fill ;
+: clearPage ( a -- )  Page# 0 cfill ;
 
 ( Allocates a single page of memory, preferrably from the page directory, returning its address a. )
 public static : allocatePage ( -- a )
   PageDirectory@ begin dup 0≠ while  dup cell+ @ 4u<if  1 reallocate exit  then
   @ repeat  drop  allocateNewPage ;
 ( Allocates a single page of clear memory (all zeroes) and returns address a of the block. )
-public static : allocatePage0 ( -- a )  allocatePage  dup clearPage ;
-( Disposes of allocated page range of # ages at address a. )
+public static : _allocatePage0 ( -- a )  allocatePage  dup clearPage ;  fulfills allocatePage0
+( Disposes of allocated page range of # pages at address a. )
 public static : disposePages ( a # -- )  over cell+ !  dup unlinkPage  freePage  mergeFreePages ;
 ( Disposes of allocated single page at address a. )
 public static : disposePage ( a -- )  1 disposePages ;
 
 ( Allocates a contiguous area of # pages after the program break and returns its address a. )
-: allocateNewArea ( # -- a )  ProgramBreak@ tuck swap pages + pgmbreak unless
-  >errmsg 1 "Fatal error while updating program break: %s!"abort  then  ProgramBreak! ;
+: allocateNewArea ( # -- a )
+  debug? if  newline dup 1 "Allocating contiguous area of %d pages"| debug.  then
+  ProgramBreak@ tuck swap pages + pgmbreak unless
+  >errmsg 1 "Fatal error while updating program break: %s!"abort  then  ProgramBreak!
+  debug? if  dup 1 " @%016X."| debug.  then ;
 ( Finds an area of # contiguous free pages, or allocates from the program break, and returns its
   address a. )
 : allocateArea ( # -- a )
@@ -163,10 +179,13 @@ public static : disposePage ( a -- )  1 disposePages ;
 : popFreePage ( a -- a' )  PageDirectory  begin  over cell+ @ 1=if  over @ swap ! exit  then
   drop dup @ swap  over 0=until  2drop splitFreeRange ;
 ( Pops page a from the page directory, or returns 0 if the page directory is empty. )
-: @freePage ( -- a|0 )  PageDirectory@ dupif  popFreePage  then ;
+: @freePage ( -- a|0 )  PageDirectory@ dupif  popFreePage
+  debug? if  newline dup 1 "Popping page @%016X from page directory."| debug.  then  then ;
 ( If a free range of # pages is available in the page directory, returns its address a, else 0. )
 : @freeRange ( # -- a|0 )  PageDirectory@ dupif PageDirectory  begin  over cell+ @ 3pick =if
-  over @ swap ! exit  then  smash @ tuck 0=until  drop  then  2drop 0 ;
+  over @ swap !  debug? if
+    newline dup dup cell+ @ 1 "Popping range of %d pages at @%016X from page directory."| debug.  then
+  exit  then  smash @ tuck 0=until  drop  then  2drop 0 ;
 
 ( Formats page a for small entries of size # and inserts it into the page array. )
 : formatSmallPage ( # a -- a )
@@ -193,11 +212,11 @@ public static : disposePage ( a -- )  1 disposePages ;
 
 ( Scans the page array for a small page with free capacity for an entry of size #, and returns its
   address a, or 0 if no such page was found. )
-: findSmallPage ( # -- a|0 )  PageArray@ over 4u* + d@ pages dupif
+: findSmallPage ( # -- a|0 )  PageArray@ @ over 4u* + d@ pages dupif
   begin  dup SmallPage full? while  Successor@ pages  0=?until  drop 0  then  then  nip ;
 ( Scans the page array for a large page with free capacity for an entry of size #, and returns its
   address a, or 0 if no such page was found. )
-: findLargePage ( # -- a|0 )  PageArray@ d@ pages dupif
+: findLargePage ( # -- a|0 )  PageArray@ @ d@ pages dupif
   begin  2dup LargePage full? while  Successor@ pages  0=?until  drop 0  then  then  nip ;
 
 ( Looks up the top page in the page array for entries of size #, returning its address a.  If the
@@ -212,31 +231,41 @@ public static : disposePage ( a -- )  1 disposePages ;
 
 ( Allocates a small entry (1 up to 255 bytes). )
 : allocateSmall ( # -- a )
-  debug? if  cr dup 1 "Allocating page for small entries of size %d"| debug.  then
-  smallPage SmallPageEntry  debug? if  dup 1 ": @%016X."| debug.  then ;
+  debug? if  newline dup 1 "Allocating small entry of size %d ..."| debug.  then
+  smallPage SmallPageEntry  debug? if  newline dup 1 "Entry @%016X."| debug.  then ;
 ( Allocates a large entry (255 up to 4080 bytes). )
 : allocateLarge ( # -- a )
-  debug? if  cr dup 1 "Allocating page for large entries of size %d"| debug.  then
-  dup largePage LargePageEntry  debug? if  dup 1 ": @016X."| debug.  then ;
+  debug? if  newline dup 1 "Allocating large entry of size %d ..."| debug.  then
+  dup largePage LargePageEntry  debug? if  newline dup 1 "Entry @016X."| debug.  then ;
 ( Allocates a huge entry (bigger than 4080 bytes). )
 : allocateHuge ( # -- a )
-  debug? if  cr dup 1 "Allocating page array for  huge entry of size %d"| debug.  then
-  dup hugePage HugePageEntry  debug? if  dup dup #Pages@ 2 ": %d pages @%016X."| debug.  then ;
+  debug? if  newline dup 1 "Allocating huge entry of size %d ..."| debug.  then
+  dup hugePage HugePageEntry  debug? if  newline dup 1 "Entry @%016X."| debug.  then ;
+
+( Allocates memory of size # and returns its address a. )
+: _alloc ( # -- a )
+  1<?if  1 "Invalid allocation size: %d"| InvalidArgumentException raise  then
+  MAX_SMALL u<?if  allocateSmall  else  MAX_LARGE u<?if allocateLarge else allocateHuge then  then ;
 
 ( Allocates a memory chunk of size # and returns its address a. )
-: _allocate ( # -- a )  1<?if  1 "Invalid allocation size: %d"| InvalidArgumentException raise  then
-  MAX_SMALL u<?if  allocateSmall  else  MAX_LARGE u<?if allocateLarge else allocateHuge then  then ;
-  fulfills allocate
+: allocate ( # -- a )  ?init ChunkSpace PageArray!  _alloc ;
 
 ( Disposes small entry @e of size # on page @p. )
 : disposeSmall ( @e @p # -- )
+  debug? if  newline 2pick over 2 "Disposing of small entry of size %d @%016X."| debug.  then
   >r tuck dup -Page# and Used#@ + #Used# + − r> u÷  over #Used swap bit−! dup #Free 1w+!
   dup SmallPage empty? if  dup disposePage  then  drop ;
 ( Disposes large entry @e on page @p. )
-: disposeLarge ( @e @p -- )  swap 2− 12bit−!  dup LargePage mergeFreeSlots
-  dup LargePage empty? if  dup disposePage  then  drop ;
+: disposeLarge ( @e @p -- )
+  debug? if  newline over dup w@ 4095and 2 "Disposing of large entry of size %d @%016X."| debug.  then
+  swap 2− 12bit−! dup LargePage mergeFreeSlots dup LargePage empty? if  dup disposePage  then drop ;
 ( Disposes huge entry @e on page @p. )
-: disposeHuge ( @e @p -- )  nip dup #Pages@ disposePages ;
+: disposeHuge ( @e @p -- )
+  debug? if  newline tuck #Bytes@ 2 "Disposing of huge entry of size %d @%016X."| debug.  then
+  dup #Pages@ disposePages ;
+( Disposes of memory block at address a. )
+: _dispose  ( a -- )  dup -Page# and dup Type@ 0=?if
+  drop disposeLarge  else  255=?if  drop disposeHuge  else  disposeSmall  then  then ;
 
 public static section --- API
 
@@ -261,37 +290,29 @@ public static section --- API
 --- Entry Deallocation ---
 
 ( Disposes of memory chunk at address a. )
-: dispose ( a -- )  dup -Page# and dup Type@ 0=?if
-  drop disposeLarge  else  255=?if  drop disposeHuge  else
-  disposeSmall  then  then ;
+: dispose ( a -- )  ?init ChunkSpace PageArray!  _dispose ;
 
 --- Object Allocation ---
 
-( Allocates a small object of size # and returns its address a. )
-: allocSmallObj ( # -- a )  ... ;
-( Allocates a large object of size # and returns its address a. )
-: allocLargeObj ( # -- a )  ... ;
-( Allocates a huge object of size # and returns its address a. )
-: allocHugeObj ( # -- a )  ... ;
 ( Allocates an object instance of total size #, clears it to all 0, and returns its address a. )
-: allocObj ( # -- a )  1<?if  1 "Invalid allocation size: %d"| InvalidArgumentException raise  then
-  dup MAX_SMALL u<?if  allocSmallObj  else  4080<?if  allocLargeObj  else  allocHugeObj  then  then
-  tuck -rot 0 cfill ;
+: _allocObj ( # -- a )  ?init dup ObjectSpace PageArray!  _alloc  tuck swap 0 cfill ;
+  fulfills allocObj
+( Disposes of object instance at address a. )
+: disposeObj ( a -- )  ?init ObjectSpace PageArray!  dup -Page# and dup Type@ 0=?if
+  drop disposeLarge  else  255=?if  drop disposeHuge  else
+  disposeSmall  then  then ;
 
 ( Returns the top memory address. )
-: topmem ( -- a )  ProgramBreak@ ;
-( Dumps the page array to the console. )
-: pageArray. ( -- )  PageArray@ 1024 hexdump ;
+: MemTop ( -- a )  ProgramBreak@ ;
+( Dumps the chunk space to the console. )
+: ChunkSpace. ( -- )  ChunkSpace@ 1024 hexdump ;
+( Dumps the object space to the console. )
+: ObjectSpace. ( -- )  ObjectSpace@ 1024 hexdump ;
 ( Prints the memory parameters. )
-: mempara. ( -- )  ProgramBreak@ "Memtop" 2 "%n%:-20s: %016X"|.
-  PageArray@ "@Page Array" 2 "%n%:-20s: %016X"|.
-  PageDirectory@ "@Page Directory" 2 "%n%:-20s: %016X"|.
-  ObjectSpace@ "@Object Space" 2 "%n%-:20s: %016X"|. ;
-
-( Initializes the vocabulary from initialization structure at address @initstr when loading. )
-private init : init ( @initstr -- @initstr )
-  0 pgmbreak unless  >errmsg 1 "Fatal error while initializing Linux memory: %s!"abort  then
-  ProgramBreak!  allocatePage0 PageArray!  allocatePage0 ObjectSpace! ProgramBreak@ InitialBreak! ;
+: Mempara. ( -- )  ProgramBreak@ "Memtop" 2 "%n%:-20s: %016X"|.
+  ChunkSpace@ "@Chunk Space" 2 "%n%:-20s: %016X"|.
+  ObjectSpace@ "@Object Space" 2 "%n%:-20s: %016X"|.
+  PageDirectory@ "@Page Directory" 2 "%n%:-20s: %016X"|. ;
 
 vocabulary;
 export LinuxMemory

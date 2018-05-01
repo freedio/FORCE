@@ -9,9 +9,9 @@ import force/object/ObjectBase
 
 ObjectBase class Object
 
-private static section
+private section
 
-protected static section
+protected section
 
  cell variable Class
 

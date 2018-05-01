@@ -104,7 +104,7 @@ variable LOC                      ( Location of copied code for relocations )
   PushedVoc @ -1=?if  "Missing class name for ‹new›!"! abort  then
   #vocabulary@ dup §TEXT @#segment@ TEXT.VOCFLAGS + VOC%CLASS bit@ unless
     @vocabulary$ 1 "Vocabulary «%s» is not a class!"|! abort  then
-  PushedVoc -1!  dup class# ALLOC,  findConstructor if  compileTarget  then ;
+  PushedVoc -1!  dup class# ALLOCOBJ,  findConstructor if  compileTarget  then ;
 
 === Stray Utils ===
 

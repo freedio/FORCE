@@ -39,6 +39,9 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : SAVE, ( -- )
   LINKER @ if  LINKERTAIL# unallot  else  RAX PUSH  @CURRENTWORD @ &@ FLAG.JOINER bit+!  then ;
 
+( Inserts a call to word w$. )
+: CALLWORD, ( w$ -- )  getTargetWord word>code &# CALL  nolink ;
+
 ( Inserts a call to code referent &c. )
 : REFCALL, ( &c -- )  &# CALL  nolink ;
 ( Inserts a call to code at address a. )
@@ -431,7 +434,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 ( Returns signed quad-word l at address a and post-increments. )
 : LFETCHINC, ( a -- a+8 l )  8 [RAX] RDX LEA  RDX PUSH  0 [RAX] RAX MOV  nolink ;
 ( Returns unsigned quad-word q at address a and post-increments. )
-: QFETCHINC, ( a -- a+8 q )  8 [RAX] RDX LEA  RDX PUSH  0 [RAX] EAX MOV  nolink ;
+: QFETCHINC, ( a -- a+8 q )  8 [RAX] RDX LEA  RDX PUSH  0 [RAX] RAX MOV  nolink ;
 ( Returns signed oct-word h at address a and post-increments. )
 : HFETCHINC, ( a -- a+16 h )  16 [RAX] RDX LEA  RDX PUSH  CELL [RAX] PUSH  0 [RAX] RAX MOV  nolink ;
 ( Returns unsigned quad-word q at address a and post-increments. )
@@ -452,7 +455,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 ( Returns signed quad-word l at address a and post-increments. )
 : DECLFETCH, ( a -- a+8 l )  -8 [RAX] RDX LEA  RDX PUSH  0 [RDX] RAX MOV  nolink ;
 ( Returns unsigned quad-word q at address a and post-increments. )
-: DECQFETCH, ( a -- a+8 q )  -8 [RAX] RDX LEA  RDX PUSH  0 [RDX] EAX MOV  nolink ;
+: DECQFETCH, ( a -- a+8 q )  -8 [RAX] RDX LEA  RDX PUSH  0 [RDX] RAX MOV  nolink ;
 ( Returns signed oct-word h at address a and post-increments. )
 : DECHFETCH, ( a -- a+16 h )  -16 [RAX] RDX LEA  RDX PUSH  CELL [RDX] PUSH  0 [RDX] RAX MOV  nolink ;
 ( Returns unsigned quad-word q at address a and post-increments. )
@@ -470,7 +473,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : OSTORE, ( o a -- )  0 [RAX] POP  CELL [RAX] POP  DROP, ;
 ( Stores # bytes of x at address a. )
 : #STORE, ( x a # -- )  RAX RCX MOV  RDX POP  RAX POP  RCX RCX TEST  0= UNLESS
-  FOR  AL 0 [RDX] MOV  8 # RAX SHR  RDX INC  NEXT  THEN DROP, ;
+  FOR  AL 0 [RDX] MOV  8 # RAX SHR  RDX INC  NEXT  THEN  DROP, ;
 
 ( Exchanges signed byte at address a with b, returning previous value b'. )
 : BXCHG, ( b a -- b' a )  0 [RSP] RDX MOV  DL 0 [RAX] XCHG  DL RDX MOVSX  RDX 0 [RSP] MOV  nolink ;
@@ -610,7 +613,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 
 === Assertions ===
 
-: ASSERT_TYPE, ( @0 -- @0 :C: &voc )  [] RDX LEA  "!instance" getTargetWord &# CALL  nolink ;
+: ASSERT_TYPE, ( @0 -- @0 :C: &voc )  [] RDX LEA  "!instance" CALLWORD,  nolink ;
 
 === Definitions ===
 
@@ -683,9 +686,12 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 
 === Object and Class Management ===
 
-( Inserts code to allocate a block of memory of u bytes and return its address a. )
+( Inserts code to allocate a chunk of memory of u bytes and return its address a. )
 : ALLOC, ( u -- a )  depth dup >r ADP+
-  SAVE,  1 ADP-  # RAX MOV  "allocate" getTargetWord &# CALL  r> 1- ADP-  nolink ;
+  SAVE,  1 ADP-  # RAX MOV  "allocate" CALLWORD,  r> 1- ADP-  nolink ;
+( Inserts code to allocate an object instance of u bytes and return its address a. )
+: ALLOCOBJ, ( u -- a )  depth dup >r ADP+
+  SAVE,  1 ADP-  # RAX MOV  "allocObj" CALLWORD,  r> 1- ADP-  nolink ;
 
 === Exception Handling ===
 
@@ -704,7 +710,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 : RESUME, ( [&h] -- )  A> &here over EXCEPT.@RCODE &+ REL.ABS64 reloc,
   &# RDX MOV  EXCEPT_CONSUMED # QWORD PTR EXCEPT.FLAGS [RDX] BT  CY UNLESS  CELL # R10 ADD  THEN
   EXCEPT.CURRENT [RDX] RCX MOV  RCX RCX TEST  0= UNLESS
-    RAX PUSH  RCX RAX MOV  "throw" getTargetWord &# CALL  THEN  nolink ;
+    RAX PUSH  RCX RAX MOV  "throw" CALLWORD,  THEN  nolink ;
 
 === String Handling ===
 
@@ -786,7 +792,7 @@ variable LINKER                   ( Indicates if last contribution was a linker.
 ( Compares short strings a$ and b$. )
 : STRCOMP, ( a$ b$ -- ? )  RAX PUSH  RSI 0 [RSP] XCHG  RDI CELL [RSP] XCHG
   BYTE PTR 0 [RSI] RCX MOVZX  BYTE PTR 0 [RDI] RAX MOVZX  RAX RCX CMP  U> IF  RAX RCX MOV  THEN
-  RCX INC  REPE BYTE PTR CMPS  1 # RCX SUB  RAX RAX SBB  RSI POP  RDI POP  nolink ;
+  RCX INC  RAX RAX XOR  REPE BYTE PTR CMPS  = IF  RAX DEC  THEN  RSI POP  RDI POP  nolink ;
 
 ( Reads the next unicode character uc from UTF8-buffer at address a and increments cursor a. )
 : FETCHUC$INC, ( a -- a' uc )  BYTE PTR 0 [RAX] RDX MOVSX  RAX INC  $80 # RDX CMP  U< UNLESS

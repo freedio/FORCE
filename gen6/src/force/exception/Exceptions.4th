@@ -41,7 +41,7 @@ private section
 ( Logs exception e as "lost under the radar". )
 : lost ( Exception:e -- )  ( TODO 1 "Lost exception %! under the radar!" WARNING flog ) drop ;
 ( Logs exception e as "uncaught". )
-: uncaught ( Exceptin:e -- )  ( TODO 1 "Uncaught exception %!!" ERROR flog  UNCAUGHT_EXCEPTION abort ) drop ;
+: uncaught ( Exception:e -- )  "Uncaught exception!"abort ;
 
 public section
 

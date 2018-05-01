@@ -11,7 +11,7 @@ public section
 cell variable Message           ( TODO belongs into a superclass )
 
 ( Constructor of class TypeCastException. )
-: construct ( String:message -- )  superconstruct  my Message! ;
+: construct ( String:message -- )  superconstruct  my Message!  me ;
 
 class;
 export InvalidArgumentException

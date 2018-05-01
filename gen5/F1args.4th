@@ -53,7 +53,7 @@ create ROOT$ 256 0allot             ( FORCE root )
   ecr "Further target architectures are explained in the manual."..
   ecr ;
 
-:( Processes the debug option. )
+:( Processes the log level option. )
 : -L ( a$ -- )  ( cr "Log level: ".  dquo dup $. dquo )
   dup "debug" $$=if  drop LOG-LEVEL 0! exit  then
   dup "info" $$=if  drop LOG-LEVEL 1! exit  then

@@ -3,7 +3,7 @@ package force/memory/trouble/
 import force/lang/Forth
 import force/exception/Exception
 
-Exception class NoSuitablEntryFoundException
+Exception class NoSuitableEntryFoundException
 
 cell variable Page                ( The page on which no entry was found. )
 
@@ -11,4 +11,4 @@ cell variable Page                ( The page on which no entry was found. )
 : construct ( Page:page -- )  superconstruct  my Page! ;
 
 class;
-export NoSuitablEntryFoundException
+export NoSuitableEntryFoundException

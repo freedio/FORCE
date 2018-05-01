@@ -51,10 +51,14 @@ defer err.
 
 === Simple Outputs ===
 
+( Prints buffer a with length # to stdout. )
+: a#out ( a # -- )  1 -rot write  2drop ;
+( Prints buffer a with length # to stderr. )
+: a#err ( a # -- )  2 -rot write  2drop ;
 ( Prints a$ to stdout. )
-private : _out. ( a$ -- )  1 swap count write  2drop ; fulfills out.
+private : _out. ( a$ -- )  count a#out ; fulfills out.
 ( Prints a$ to stderr. )
-private : _err. ( a$ -- )  2 swap count write  2drop ; fulfills err.
+private : _err. ( a$ -- )  count a#err ; fulfills err.
 
 === OS Specifics ===
 

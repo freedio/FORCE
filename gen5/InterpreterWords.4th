@@ -30,7 +30,7 @@ vocabulary InterpreterWords
 : initClass ( @sc c$ @c -- )  >vocabularies targetVoc!  SCOPE.PRIVATE SECTION-FLAGS !  >text
   0 , ( superclass )  over !classDef  SCOPE.PRIVATE FIELD-FLAGS !
   over @vocabulary# selfRef  targetVoc# 0 0 createReferent  REL.ABS64 reloc,
-  -1 d, ( module name offset )  swap class# d, ( instance size )  0 w, ( word count )
+  -1 d, ( module name offset )  swap 31.s class# 32.s d, ( instance size )  0 w, ( word count )
   1 VOC%CLASS u<< w, ( voc flags )  %VOC-WORD CURRENT-FLAGS !  createWord
   currentCode!  ENTER, targetVoc# selfRef ADDR, EXIT, currentCode#!  segment> ;
 : initStruct ( @ss c$ @s -- )  >vocabularies targetVoc!  SCOPE.PUBLIC SECTION-FLAGS !  >text
@@ -83,6 +83,11 @@ vocabulary InterpreterWords
   §TEXT #segment@# TEXT.VOCWORD +> begin dup while  "90 90 90 90 ".  4 +>
   over c@ 1+ 0 do  "90 ". 1 +> loop  over w@ >r  2 +>  "90 90 ".  r> 0 do  over c@ 1 "%02x "|.  1 +>
   loop  repeat  2drop  cr ;
+( Dumps the code of the vocabulary #v. )
+: #code. ( #v -- )  cr "Code:".  cr  TEXT.VOCWORD 0 do "90 ". loop
+  #vocabulary@ §TEXT @#segment@# TEXT.VOCWORD +> begin dup while  "90 90 90 90 ".  4 +>
+  over c@ 1+ 0 do  "90 ". 1 +> loop  over w@ >r  2 +>  "90 90 ".  r> 0 do  over c@ 1 "%02x "|.  1 +>
+  loop  repeat  r> 3drop  cr ;
 ( Dumps the dictionary. )
 : dict. ( -- )  cr "Dictionary:".
   dictionary@# cellu/ 0 do  dup @ ?dupif  cr i 1 "D%03x"|.  _dicte.  then  cell+ loop  drop ;
@@ -135,13 +140,13 @@ vocabulary InterpreterWords
 
 ( Prints decimal int x to console. )
 : . ( x -- )  debug? if  cr  then
-  n>$ $>stdout cr ;
+  n>$ $>stdout cr ;  alias print
 ( Prints hex int x to console. )
 : h. ( x -- )  debug? if  cr  then
-  hu>$ $>stdout cr ;
+  hu>$ $>stdout cr ;  alias hprint
 ( Prints string a$. )
 : $. ( a$ -- )  debug? if  cr  then
-  $>stdout cr ;
+  $>stdout cr ;  alias $print
 : ^. ( -- )  .s ;
 : xdump ( a # -- )  hexdump ;
 

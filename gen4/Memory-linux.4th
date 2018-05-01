@@ -75,8 +75,14 @@ variable PAGE-ARRAY
 
 === Memory Management ===
 
+/*
 :( Allocates a contiguous array of u pages of memory and returns its address a. )
 : allocPages ( u -- a )  PAGE# u* pgmbrk@ tuck @ + pgmbrk  swap xchg drop ;
+*/
+
+: allocPages ( u -- a )  PGM-BRK @ unlessever  setup  then
+  PAGE# u* 0 pgmbrk tuck + pgmbrk drop ;
+
 :( Resizes the area at address a from u1 to u2 consecutive pages at a'.  If no other object is
    allocated above a, the page break is simply extended, and a' = a, otherwise a new area of the
    requested size is allocated, the previous contents of the page copied to the new area, and

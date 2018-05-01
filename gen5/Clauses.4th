@@ -205,6 +205,15 @@ vocabulary Clauses
 ( Sets quadword at address a to _q. )
 : _#q! ( a _q -- )  # QWORD PTR 0 [RAX] MOV  DROP, ;  alias _#!
 
+( Sets byte at address a to _c. )
+: _#c!++ ( a _c -- a+1 )  # BYTE PTR 0 [RAX] MOV  RAX INC  nolink ;
+( Sets word at address a to _w. )
+: _#w!++ ( a _w -- a+2 )  # WORD PTR 0 [RAX] MOV  2 # RAX ADD  nolink ;
+( Sets double-word at address a to _d. )
+: _#d!++ ( a _d -- a+4 )  # DWORD PTR 0 [RAX] MOV  4 # RAX ADD  nolink ;
+( Sets quadword at address a to _q. )
+: _#q!++ ( a _q -- a+8 )  # QWORD PTR 0 [RAX] MOV  8 # RAX ADD  nolink ;  alias _#!++
+
 === Memory Arithmetics ===
 
 ( Adds _c to byte at address a. )
@@ -329,7 +338,7 @@ vocabulary Clauses
 === Debugging Clauses ===
 
 ( Prints the parameter stack layout with label _n. )
-: _#.s ( _n -- )  1 ADP+  RAX PUSH  1 ADP-  # RAX MOV  "#.s" getTargetWord compileTarget ;
+: _#.s ( _n -- )  1 ADP+  SAVE,  1 ADP-  # RAX MOV  "#.s" getTargetWord compileTarget ;
 
 === Conditional Clauses ===
 

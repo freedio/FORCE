@@ -5,6 +5,7 @@ vocabulary CompilerWords
   requires" OS.voc"
   requires" StringFormat.voc"
   requires" Heap.voc"
+  requires" Referent.voc"
   requires" FileIO.voc"
   requires" LogLevel.voc"
   requires" Vocabulary.voc"
@@ -27,6 +28,11 @@ vocabulary CompilerWords
 : (openpar) ( -- )
   1 begin  readChar ?dup while  '('=?if  drop 1+  else  ')'=if  1−  then  then  dup 0= until  then
   if  "EOF while reading comment"!  then ;
+
+=== Vocabulary Words ===
+
+( Pushes address a and length # of the text segment of the currently pushed vocabulary. )
+: .text ( -- a # )  voc# §TEXT 0 createReferent ADDR, ;
 
 === Object and Class Related Words ===
 
@@ -60,6 +66,7 @@ vocabulary CompilerWords
 : catch ( [&h] -- [&h] )  CATCH, ;
 : finally ( [&h] -- [&h] )  FINALLY, ;
 : resume ( [&h] -- )  RESUME, ;
+
 : raise ( ^voc -- )  new  "throw" getTargetWord compileTarget ;
 
 === Blocks and Loops ===

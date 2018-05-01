@@ -18,6 +18,9 @@ private static section --- interna ------------------------
 
 public static section --- API ----------------------------
 
+( Compares actual integer a against expectation e. )
+: expect ( a e )  2dup =unless
+  ecr 2 "Expected %d, but got %d!"|!  failures 1w+!  else  2drop  successes 1w+!  then ;
 ( Compares actual short string a$ against expectation e$. )
 : expect$ ( a$ e$ -- )  2dup $= unless
   ecr 2 "Expected «%s», but got «%s»!"|!  failures 1w+!  else  2drop  successes 1w+!  then ;

@@ -53,9 +53,9 @@ public static section --- API
 ( Writes short string a$ to the standard error channel. )
 : $.. ( a$ -- )  err. ;
 ( Emits unicode character uc as UTF-8 to standard output. )
-: emit ( uc -- )  Buffer tuck dup 0c! uc>utf8$ $. ;
+: emit ( uc -- )  Buffer tuck dup 0c! uc>utf8$ out. ;
 ( Emits unicode character uc as UTF-8 to standard error. )
-: eemit ( uc -- )  Buffer tuck dup 0c! uc>utf8$ $.. ;
+: eemit ( uc -- )  Buffer tuck dup 0c! uc>utf8$ err. ;
 ( Advances the cursor to the beginning of next line by sending a NEWLINE to stdout. )
 : cr ( -- )  10 emit ;
 ( Advances the cursor to the beginning of next line by sending a NEWLINE to stderr. )
@@ -69,29 +69,35 @@ public static section --- API
 ( Advances the cursor by sending # BLANKs to stderr. )
 : espaces ( # -- )  Buffer 2dup c! tuck 1+ swap ␣ cfill  err. ;
 ( Prints number n to standard output. )
-: . ( n -- )  n>$ $. ;
+: . ( n -- )  n>$ out. ;
 ( Prints number n to standard error. )
-: e. ( n -- )  n>$ $.. ;
+: e. ( n -- )  n>$ err. ;
 ( Prints unsigned number u to standard output. )
-: u. ( n -- )  u>$ $. ;
+: u. ( n -- )  u>$ out. ;
 ( Prints unsigned number u to standard error. )
-: eu. ( n -- )  u>$ $.. ;
+: eu. ( n -- )  u>$ err. ;
 ( Prints unsigned number u to standard output as hex nmber with lower-case letters. )
-: hu. ( n -- )  hu>$ $. ;
+: hu. ( n -- )  hu>$ out. ;
 ( Prints unsigned number u to standard error as hex number with lower-case letters. )
-: ehu. ( n -- )  hu>$ $.. ;
+: ehu. ( n -- )  hu>$ err. ;
 ( Prints unsigned number u to standard output as hex nmber with upper-case letters. )
-: Hu. ( n -- )  Hu>$ $. ;
+: Hu. ( n -- )  Hu>$ out. ;
 ( Prints unsigned number u to standard error as hex number with upper-case letters. )
-: eHu. ( n -- )  Hu>$ $.. ;
+: eHu. ( n -- )  Hu>$ err. ;
+
+( Prints buffer a with length # to stdout. )
+: a#. ( a # -- )  a#out ;
+( Prints buffer a with length # to stderr. )
+: a#.. ( a # -- )  a#err ;
 
 ( Prints unsigned number u as # hex digits to standard output. )
-: #hu. ( u # -- )  #hu>$ $.. ;
+: #hu. ( u # -- )  #hu>$ out. ;
 
 ( Prints string a$ as an error message (highlighted) to stderr. )
-: !$. ( a$ -- )  "\e[1m" $..  $..  "\e[22m" $.. ;
+: !$. ( a$ -- )  "\e[1m" err.  err.  "\e[22m" err. ;
 ( Prints string a$ as a debug message (lowlighted) to stderr. )
-: debug. ( a$ -- )  "\e[2m" $..  $..  "\e[22m" $.. ;
+: debug. ( a$ -- )  "\e[2m" err.  err.  "\e[22m" err. ;
+: newline cr ;
 
 vocabulary;
 export DirectIO
